@@ -1,1 +1,32 @@
-@tailwind base; @tailwind components; @tailwind utilities;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 3 7 18;
+    --foreground: 45 212 191;
+    --primary: 45 212 191;
+  }
+}
+
+body {
+  background-color: #030712;
+  color: #f9fafb;
+  font-family: var(--font-inter), sans-serif;
+}
+
+.text-cyan-glow {
+  text-shadow: 0 0 15px rgba(45, 212, 191, 0.4);
+}
+
+.card-glass {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.card-glass:hover {
+  border-color: rgba(45, 212, 191, 0.3);
+  background: rgba(17, 24, 39, 0.9);
+}
