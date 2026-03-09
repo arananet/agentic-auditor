@@ -9,7 +9,7 @@ import { AuditResponse } from "@/types";
 export default function Home() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [logs, setLogs] = useState<string[]>(["// SESSION_LOG_INIT...", "[WAIT] Awaiting target URL..."]);
+  const [logs, setLogs] = useState<string[]>(["// Session log initialized...", "[Wait] Awaiting target URL for agentic evaluation..."]);
   const [results, setResults] = useState<AuditResponse | null>(null);
 
   const handleAudit = async () => {
@@ -24,7 +24,7 @@ export default function Home() {
       setResults(data);
       setLogs(prev => [...prev, ...data.log]);
     } catch (e) {
-      setLogs(prev => [...prev, "[FATAL] CONNECTION FAILED."]);
+      setLogs(prev => [...prev, "[Fatal] Connection failed."]);
     } finally {
       setLoading(false);
     }
@@ -42,16 +42,18 @@ export default function Home() {
       <header className="flex justify-between items-center mb-12 border-b border-[#00FF41]/20 pb-4">
         <div className="flex items-center gap-3">
           <Terminal className="animate-pulse" />
-          <h1 className="text-lg tracking-[0.2em] font-bold uppercase text-shadow-glow">Agentic Auditor</h1>
+          <h1 className="text-lg tracking-[0.2em] font-bold uppercase">Agentic Auditor</h1>
         </div>
       </header>
 
       <div className="max-w-4xl mx-auto space-y-8 w-full flex-grow">
-        <div className="mb-8">
-          <p className="text-sm text-[#00FF41]/70 leading-relaxed max-w-2xl">
-            Evaluate your domain for Generative Engine Optimization (GEO). 
-            This auditor scans for AI-readiness signals including machine-readable context, 
-            semantic identity, and crawler accessibility.
+        <div className="mb-8 border-l-2 border-[#00FF41]/30 pl-6 py-2">
+          <p className="text-sm text-[#00FF41]/70 leading-relaxed max-w-2xl italic">
+            "The high-fidelity readiness check for the Generative Era."
+          </p>
+          <p className="text-xs text-[#00FF41]/50 mt-2">
+            Analyze any domain for GEO (Generative Engine Optimization). We evaluate machine-readable context, 
+            semantic identity, and AI crawler accessibility.
           </p>
         </div>
 
@@ -63,7 +65,7 @@ export default function Home() {
         </div>
       </div>
 
-      <footer className="mt-20 border-t border-[#00FF41]/10 pt-8 text-center text-[10px] opacity-40 uppercase tracking-widest">
+      <footer className="mt-20 border-t border-[#00FF41]/10 pt-8 text-center text-[10px] opacity-40 uppercase tracking-[0.3em]">
         Developed by Eduardo Arana & Soda 🥤
       </footer>
     </main>

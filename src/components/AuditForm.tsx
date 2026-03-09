@@ -15,7 +15,7 @@ export const AuditForm = ({ url, loading, onUrlChange, onAudit }: Props) => (
     <div className="absolute bottom-0 right-0 w-2 h-2 border-r border-b border-[#00FF41]" />
     
     <h2 className="text-sm mb-6 flex items-center gap-2">
-      <Globe size={14} /> INITIALIZE_SITE_SCAN
+      <Globe size={14} /> Initialize Site Scan
     </h2>
     
     <div className="flex flex-col sm:flex-row gap-4">
@@ -31,7 +31,7 @@ export const AuditForm = ({ url, loading, onUrlChange, onAudit }: Props) => (
         disabled={loading}
         className={`bg-[#00FF41] text-black px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(0,255,65,0.3)] ${loading ? 'opacity-50' : 'hover:bg-[#00FF41]/80'}`}
       >
-        {loading ? "Scanning..." : "Execute_Audit"}
+        {loading ? "Scanning..." : "Execute Audit"}
       </button>
     </div>
   </div>
