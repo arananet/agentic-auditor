@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Terminal, Bot } from "lucide-react";
+import { Terminal } from "lucide-react";
 import { AuditForm } from "@/components/AuditForm";
 import { MetricsGrid } from "@/components/MetricsGrid";
 import { AuditResponse } from "@/types";
@@ -58,6 +58,6 @@ export default function Home() {
       <footer className="mt-20 border-t border-[#00FF41]/10 pt-8 text-center text-[10px] opacity-40 uppercase">
         Developed by Eduardo Arana and Soda 🥤
       </footer>
-    </main>\n  );\n}\nEOF
-
-git add . && git commit -m "feat: complete professional refactor with modular components" && git push origin main
+    </main>
+  );
+}
