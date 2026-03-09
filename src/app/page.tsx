@@ -31,10 +31,10 @@ export default function Home() {
   };
 
   const metricsData = results ? [
-    { id: "citability", label: "Citability_Analysis", data: results.citability },
-    { id: "schema", label: "Schema_Authority_Check", data: results.schema },
-    { id: "technical", label: "Technical_GEO_Vitals", data: results.technical },
-    { id: "a2a", label: "A2A_Handshake_Verify", data: results.a2a }
+    { id: "citability", label: "Citability Analysis", data: results.citability },
+    { id: "schema", label: "Schema Authority", data: results.schema },
+    { id: "technical", label: "Technical GEO Vitals", data: results.technical },
+    { id: "a2a", label: "A2A Handshake", data: results.a2a }
   ] : [];
 
   return (
@@ -42,21 +42,29 @@ export default function Home() {
       <header className="flex justify-between items-center mb-12 border-b border-[#00FF41]/20 pb-4">
         <div className="flex items-center gap-3">
           <Terminal className="animate-pulse" />
-          <h1 className="text-lg tracking-[0.2em] font-bold uppercase">Agentic_Auditor_v1</h1>
+          <h1 className="text-lg tracking-[0.2em] font-bold uppercase text-shadow-glow">Agentic Auditor</h1>
         </div>
       </header>
 
       <div className="max-w-4xl mx-auto space-y-8 w-full flex-grow">
+        <div className="mb-8">
+          <p className="text-sm text-[#00FF41]/70 leading-relaxed max-w-2xl">
+            Evaluate your domain for Generative Engine Optimization (GEO). 
+            This auditor scans for AI-readiness signals including machine-readable context, 
+            semantic identity, and crawler accessibility.
+          </p>
+        </div>
+
         <AuditForm url={url} loading={loading} onUrlChange={setUrl} onAudit={handleAudit} />
         {results && <MetricsGrid metrics={metricsData} />}
         
-        <div className="border border-[#00FF41]/20 bg-black p-6 h-48 overflow-y-auto text-[11px]">
+        <div className="border border-[#00FF41]/20 bg-black p-6 h-48 overflow-y-auto text-[11px] scrollbar-hide">
           {logs.map((log, i) => <p key={i}>{log}</p>)}
         </div>
       </div>
 
-      <footer className="mt-20 border-t border-[#00FF41]/10 pt-8 text-center text-[10px] opacity-40 uppercase">
-        Developed by Eduardo Arana and Soda 🥤
+      <footer className="mt-20 border-t border-[#00FF41]/10 pt-8 text-center text-[10px] opacity-40 uppercase tracking-widest">
+        Developed by Eduardo Arana & Soda 🥤
       </footer>
     </main>
   );

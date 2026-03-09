@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "GEO Agentic Auditor | AI Readiness Check",
-  description: "Verify if your website is optimized for AI agents and LLM citation.",
+  title: "Agentic Auditor | AI Readiness Engine",
+  description: "High-fidelity website evaluation for Generative Engine Optimization (GEO). Developed by Eduardo Arana & Soda 🥤",
 };
 
 export default function RootLayout({
