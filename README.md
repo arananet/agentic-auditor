@@ -1,16 +1,16 @@
-# 🤖 GEO Agentic Auditor
+#  GEO Agentic Auditor
 
 > **The high-fidelity readiness check for the Generative Era.**
 
 Developed by **Eduardo Arana** and **Soda 🥤**.
 
-## 📋 Project Vision
+##  Project Vision
 
 The **Agentic Auditor** is a production-grade diagnostic tool designed to evaluate if a website is optimized for discovery and citation by Generative AI engines (ChatGPT, Claude, Perplexity, Gemini, and SearchGPT). 
 
 Unlike traditional SEO, which focuses on search engine ranking, this auditor measures **Generative Engine Optimization (GEO)**—ensuring your digital footprint is machine-readable, authoritative, and "agent-friendly."
 
-## 🧠 Intelligence Engine (The GEO Spectrum)
+##  Intelligence Engine (The GEO Spectrum)
 
 The auditing logic is powered by a suite of **11 specialized GEO Skills** adapted from the [geo-seo-claude](https://github.com/zubair-trabzada/geo-seo-claude) framework. The system orchestrates these skills to analyze a domain across five critical dimensions:
 
@@ -32,7 +32,7 @@ Evaluates **Experience, Expertise, Authoritativeness, and Trustworthiness**. Thi
 ### 5. Semantic Schema (`geo-schema`)
 Validates `application/ld+json` structured data. We specifically hunt for GEO-critical types: `Person`, `Organization`, `FAQPage`, and `ProfessionalService` to build a deterministic map for engines.
 
-## 🏗 Technical Architecture
+##  Technical Architecture
 
 This project is a high-performance **Next.js 14** application with a separated concern architecture:
 
@@ -41,7 +41,7 @@ This project is a high-performance **Next.js 14** application with a separated c
 - **Services (`/src/services`)**: Business logic isolation. The `AuditorService` handles the heavy lifting of DOM traversal and HTTP probes using `cheerio`.
 - **Externals**: Optimized for **Railway** deployment using Webpack externals for server-side processing libraries.
 
-## 🚀 Getting Started
+##  Getting Started
 
 ```bash
 # 1. Clone the repository
@@ -54,6 +54,6 @@ npm install
 npm run dev
 ```
 
-## 🧪 Deployment
+##  Deployment
 
 Configured for instant deployment on **Railway** via the included `Dockerfile` and `railway.json`.
