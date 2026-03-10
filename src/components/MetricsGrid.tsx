@@ -57,15 +57,15 @@ export const MetricsGrid = ({ metrics }: Props) => (
                     <span className="text-[#D4A373] mt-0.5">-</span> 
                     <span className="border-b border-dashed border-white/20 pb-0.5">{detail.message}</span>
                     
-                    {/* Tooltip Bubble */}
-                    <div className="absolute bottom-[120%] left-0 w-64 bg-[#151515] border border-[#D4A373]/30 p-4 rounded-sm shadow-[0_10px_40px_rgba(0,0,0,0.8)] z-[100] text-left opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-200">
-                       <div className="text-[#D4A373] text-[9px] font-bold mb-1 uppercase tracking-widest">Analysis</div>
-                       <div className="text-white/70 text-[10px] mb-4 leading-relaxed">{detail.explanation}</div>
-                       <div className="text-[#8FBC8F] text-[9px] font-bold mb-1 uppercase tracking-widest">Remediation</div>
-                       <div className="text-white/70 text-[10px] leading-relaxed">{detail.remediation}</div>
+                    {/* Hover Bubble / Tooltip */}
+                    <div className="absolute bottom-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-[280px] bg-[#111111] border border-[#D4A373]/40 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.9)] z-[100] text-left opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-300 transform translate-y-2 group-hover/tooltip:translate-y-0 pointer-events-none">
+                       <div className="text-[#D4A373] text-[8px] font-bold mb-2 uppercase tracking-[0.2em] border-b border-[#D4A373]/20 pb-1">Analysis</div>
+                       <div className="text-white/80 text-[10px] mb-5 leading-[1.6]">{detail.explanation}</div>
+                       <div className="text-[#8FBC8F] text-[8px] font-bold mb-2 uppercase tracking-[0.2em] border-b border-[#8FBC8F]/20 pb-1">Remediation</div>
+                       <div className="text-white/80 text-[10px] leading-[1.6]">{detail.remediation}</div>
                        
                        {/* Arrow pointing down */}
-                       <div className="absolute -bottom-2 left-4 w-4 h-4 bg-[#151515] border-b border-r border-[#D4A373]/30 transform rotate-45"></div>
+                       <div className="absolute -bottom-[6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-[#111111] border-b border-r border-[#D4A373]/40 transform rotate-45"></div>
                     </div>
                   </li>
                 ))}
