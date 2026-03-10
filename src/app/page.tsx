@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Bot, Zap, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuditForm } from "@/components/AuditForm";
 import { MetricsGrid } from "@/components/MetricsGrid";
@@ -10,36 +11,20 @@ export default function Home() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<AuditResponse | null>(null);
-  const [logs, setLogs] = useState<{type: 'ok'|'warn'|'info', text: string}[]>([
-    {type: 'ok', text: 'INITIALIZING ARCHIVE ACCESS...'},
-    {type: 'ok', text: 'LOADING SILICON_SOUL_MODULES...'},
-    {type: 'info', text: 'WAITING FOR TARGET URL...'}
-  ]);
+  const [logs, setLogs] = useState<string[]>([]);
 
   const handleAudit = async () => {
     if (!url) return;
     setLoading(true);
     setResults(null);
-    setLogs(prev => [
-      ...prev, 
-      {type: 'info', text: `FETCHING TARGET DATA_STREAM FOR ${url.toUpperCase()}...`}
-    ]);
-    
+    setLogs(["[INIT] Establishing handshake with target...", "[SCAN] Probing GEO spectrum..."]);
     try {
       const res = await fetch("/api/audit", { method: "POST", body: JSON.stringify({ url }) });
       const data = await res.json();
       setResults(data);
-      
-      const newLogs = data.log.map((l: string) => {
-        let type: 'ok'|'warn'|'info' = 'info';
-        if (l.includes('[+]') || l.includes('Success') || l.includes('Found')) type = 'ok';
-        if (l.includes('[-]') || l.includes('Missing') || l.includes('Failed')) type = 'warn';
-        return { type, text: l.replace(/\[\+\]|\[-\]/g, '').trim().toUpperCase() };
-      });
-      
-      setLogs(prev => [...prev, ...newLogs, {type: 'ok', text: 'HANDSHAKE_PROTOCOL SUCCESSFUL'}]);
+      setLogs(prev => [...prev, ...data.log]);
     } catch (e) {
-      setLogs(prev => [...prev, {type: 'warn', text: 'CONNECTION_REFUSED OR TIMEOUT'}]);
+      setLogs(prev => [...prev, "[ERROR] Handshake failed."]);
     } finally {
       setLoading(false);
     }
@@ -48,82 +33,115 @@ export default function Home() {
   const metricsData = results ? [
     { 
       id: "citability", 
-      label: "Citability", 
+      label: "CITABILITY", 
       data: results.citability,
       description: "Analyzes content structure for 'Answer Blocks' that LLMs prefer to extract and cite in their generative responses. High scores indicate strong agent-friendly formatting."
     },
     { 
       id: "schema", 
-      label: "Schema", 
+      label: "SCHEMA", 
       data: results.schema,
       description: "Validates structured JSON-LD data to ensure accurate identity resolution across the global entity graph, preventing collisions and hallucinated associations."
     },
     { 
       id: "technical", 
-      label: "Technical", 
+      label: "TECHNICAL", 
       data: results.technical,
       description: "Evaluates raw technical vitals including performance, accessibility, and crawlability metrics that affect how aggressively agents index the domain."
     },
     { 
-      id: "a2a", 
-      label: "A2A Protocol", 
+      id: "llmstxt", 
+      label: "LLMS_TXT_PROTOCOL", 
       data: results.a2a,
-      description: "Verifies the presence and validity of Agent-to-Agent communication protocols, specifically robots.txt optimizations and the emerging llms.txt standard."
+      description: "Verifies the presence and validity of machine-readable context files, specifically robots.txt optimizations and the emerging llms.txt standard."
     }
   ] : [];
 
   return (
-    <main className="min-h-screen bg-[#0A0A0A] text-[#DCDCDC] p-6 md:p-12 font-mono relative flex flex-col items-center">
-      <header className="w-full max-w-7xl flex justify-between items-center mb-16 pb-4">
+    <main className="min-h-screen bg-[#0A0A0A] text-[#DCDCDC] selection:bg-[#D4A373] selection:text-black font-mono">
+      {/* Navbar */}
+      <nav className="max-w-[1400px] mx-auto px-6 py-6 flex justify-between items-center relative z-50">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-[#1A1A1A] border border-white/10 rounded-sm flex items-center justify-center">
+            <Bot className="text-[#D4A373]" size={18} />
+          </div>
+          <span className="font-normal text-sm tracking-[0.2em] text-white/80 uppercase">Agentic Auditor</span>
+        </div>
         <div className="flex items-center gap-4">
-          <div className="w-8 h-8 border border-[#D4A373] flex items-center justify-center rounded-sm">
-            <div className="w-3 h-3 bg-[#D4A373]" />
-          </div>
-          <h1 className="text-xl tracking-[0.3em] uppercase text-[#D4A373]">Agentic_Auditor</h1>
+          <button className="px-6 py-2 bg-transparent border border-[#D4A373]/30 text-[#D4A373] text-[10px] uppercase tracking-widest hover:bg-[#D4A373]/10 transition-all">
+            Get Started
+          </button>
         </div>
-        <div className="hidden md:flex gap-6 text-[10px] text-white/30 uppercase tracking-widest">
-           <span>Sys: v1.3.0</span>
-           <span>Net: Secure</span>
-        </div>
-      </header>
+      </nav>
 
-      <div className="w-full max-w-7xl space-y-16">
-        <div className="max-w-2xl">
-          <AuditForm url={url} loading={loading} onUrlChange={setUrl} onAudit={handleAudit} />
-        </div>
+      {/* Hero Section */}
+      <section className="max-w-4xl mx-auto px-6 pt-24 pb-24 text-center relative">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="inline-flex items-center gap-2 px-3 py-1 bg-[#1A1A1A] border border-white/5 text-white/40 text-[9px] uppercase tracking-[0.3em] mb-12"
+        >
+          <Zap size={10} className="text-[#D4A373]" />
+          Now supporting 11 GEO Parameters
+        </motion.div>
 
-        <AnimatePresence>
-          {results && (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }} 
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-12"
-            >
-               <MetricsGrid metrics={metricsData} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="text-4xl md:text-5xl font-normal tracking-wide mb-8 leading-tight text-white/90"
+        >
+          Validate Site Readiness <br/>
+          <span className="text-[#D4A373] italic">Before The Agents Arrive</span>
+        </motion.h1>
 
-        <div className="border border-white/10 bg-[#050505] p-6 rounded-sm max-w-3xl">
-          <div className="text-[10px] text-[#D4A373] uppercase tracking-widest mb-4">
-            SYSTEM_TELEMETRY_LOG
-          </div>
-          <div className="h-40 overflow-y-auto text-[11px] font-mono space-y-2 scrollbar-hide">
-            {logs.map((log, i) => (
-              <div key={i} className="flex gap-3">
-                <span className={`w-12 shrink-0 ${log.type === 'ok' ? 'text-[#8FBC8F]' : log.type === 'warn' ? 'text-[#D4A373]' : 'text-white/40'}`}>
-                  [{log.type === 'info' ? 'SYS' : log.type.toUpperCase()}]
-                </span>
-                <span className="text-white/60">{log.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="max-w-2xl mx-auto text-white/40 text-xs md:text-sm leading-relaxed mb-16 tracking-wide"
+        >
+          Test your Generative Engine Optimization (GEO) implementations against 11 official specifications from the geo-seo-claude framework. Detect non-compliance and citation gaps before they reach production.
+        </motion.p>
+      </section>
 
-      <footer className="w-full max-w-7xl mt-auto pt-24 pb-8 text-center border-t border-white/5 mt-32">
-         <div className="text-[10px] text-white/30 uppercase tracking-[0.3em]">
-            DEVELOPED BY <span className="text-[#D4A373] ml-1">EDUARDO ARANA & SODA 🥤</span>
+      {/* Audit Tool Section */}
+      <section id="audit-section" className="max-w-[1400px] mx-auto px-6 pb-32">
+         <div className="max-w-3xl mx-auto mb-16">
+            <AuditForm url={url} loading={loading} onUrlChange={setUrl} onAudit={handleAudit} />
+         </div>
+         
+         <AnimatePresence>
+            {results && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }} 
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-12"
+              >
+                 <div className="flex items-center gap-4 text-[10px] text-white/30 uppercase tracking-[0.3em] pb-4 border-b border-white/5">
+                    <span className="w-2 h-2 rounded-full bg-[#8FBC8F] animate-pulse"></span>
+                    Diagnostic_Report_Loaded
+                 </div>
+                 
+                 <MetricsGrid metrics={metricsData} />
+                 
+                 {/* Raw Logs */}
+                 <div className="mt-8 border border-white/5 bg-[#0D0D0D] p-6 font-mono text-[10px] h-40 overflow-y-auto text-white/30 tracking-wider">
+                    {logs.map((log, i) => (
+                      <p key={i} className={`mb-1 ${log.includes('[ERROR]') ? 'text-red-400/80' : log.includes('[OK]') ? 'text-[#8FBC8F]/80' : ''}`}>
+                        {log}
+                      </p>
+                    ))}
+                 </div>
+              </motion.div>
+            )}
+         </AnimatePresence>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-white/5 py-12 text-center">
+         <div className="text-[10px] text-white/30 uppercase tracking-widest">
+            Developed by <span className="text-[#D4A373] ml-1">Eduardo Arana & Soda 🥤</span>
          </div>
       </footer>
     </main>

@@ -1,4 +1,4 @@
-import { Globe } from "lucide-react";
+import { Globe, ArrowRight } from "lucide-react";
 
 interface Props {
   url: string;
@@ -8,31 +8,23 @@ interface Props {
 }
 
 export const AuditForm = ({ url, loading, onUrlChange, onAudit }: Props) => (
-  <div className="border border-white/10 bg-[#0A0A0A] p-8 relative">
-    <div className="absolute top-0 left-0 w-2 h-2 border-l border-t border-[#D4A373]" />
-    <div className="absolute top-0 right-0 w-2 h-2 border-r border-t border-[#D4A373]" />
-    <div className="absolute bottom-0 left-0 w-2 h-2 border-l border-b border-[#D4A373]" />
-    <div className="absolute bottom-0 right-0 w-2 h-2 border-r border-b border-[#D4A373]" />
-    
-    <h2 className="text-sm mb-6 flex items-center gap-2 text-white/70 uppercase tracking-widest font-mono">
-      <Globe size={14} className="text-[#D4A373]" /> Initialize Target
-    </h2>
-    
-    <div className="flex flex-col sm:flex-row gap-4">
-      <input 
-        type="text" 
-        value={url}
-        onChange={(e) => onUrlChange(e.target.value)}
-        placeholder="https://arananet.net"
-        className="flex-grow bg-[#050505] border border-white/10 p-3 text-sm font-mono focus:outline-none focus:border-[#D4A373] transition-colors text-white/80 placeholder:opacity-30"
-      />
-      <button 
-        onClick={onAudit}
-        disabled={loading}
-        className={`bg-transparent border border-[#D4A373] text-[#D4A373] px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all hover:bg-[#D4A373]/10 font-mono ${loading ? 'opacity-50' : ''}`}
-      >
-        {loading ? "Scanning..." : "Execute"}
-      </button>
+  <div className="bg-[#111111] border border-white/5 p-2 flex items-center shadow-2xl">
+    <div className="px-4 text-white/20">
+      <Globe size={16} />
     </div>
+    <input 
+      type="text" 
+      value={url}
+      onChange={(e) => onUrlChange(e.target.value)}
+      placeholder="https://arananet.net"
+      className="flex-grow bg-transparent border-none text-sm text-white/80 focus:outline-none placeholder:text-white/20 tracking-wide font-mono py-4"
+    />
+    <button 
+      onClick={onAudit}
+      disabled={loading}
+      className={`bg-[#D4A373] text-black px-8 py-4 text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-2 ${loading ? 'opacity-50' : 'hover:bg-[#E5B586]'}`}
+    >
+      {loading ? "Scanning..." : "Initialize"} <ArrowRight size={12} />
+    </button>
   </div>
 );
