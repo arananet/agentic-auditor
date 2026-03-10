@@ -11,7 +11,7 @@ export default function Home() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<AuditResponse | null>(null);
-  const [logs, setLogs] = useState<string[]>([]);
+  const [logs, setLogs] = useState<string[]>(["[INIT] Establishing handshake with target...", "[SCAN] Probing GEO spectrum..."]);
 
   const handleAudit = async () => {
     if (!url) return;
@@ -35,25 +35,67 @@ export default function Home() {
       id: "citability", 
       label: "CITABILITY", 
       data: results.citability,
-      description: "Analyzes content structure for 'Answer Blocks' that LLMs prefer to extract and cite in their generative responses. High scores indicate strong agent-friendly formatting."
+      description: "Analyzes content structure for 'Answer Blocks' that LLMs prefer to extract and cite in their generative responses."
     },
     { 
       id: "schema", 
-      label: "SCHEMA", 
+      label: "SEMANTIC_SCHEMA", 
       data: results.schema,
-      description: "Validates structured JSON-LD data to ensure accurate identity resolution across the global entity graph, preventing collisions and hallucinated associations."
+      description: "Validates structured JSON-LD data to ensure accurate identity resolution across the global entity graph."
     },
     { 
       id: "technical", 
       label: "TECHNICAL", 
       data: results.technical,
-      description: "Evaluates raw technical vitals including performance, accessibility, and crawlability metrics that affect how aggressively agents index the domain."
+      description: "Evaluates raw technical vitals including performance, accessibility, and AI crawler directives."
     },
     { 
       id: "llmstxt", 
       label: "LLMS_TXT_PROTOCOL", 
       data: results.a2a,
-      description: "Verifies the presence and validity of machine-readable context files, specifically robots.txt optimizations and the emerging llms.txt standard."
+      description: "Verifies the presence and validity of machine-readable context files for direct AI ingestion."
+    },
+    { 
+      id: "brandMentions", 
+      label: "BRAND_AUTHORITY", 
+      data: results.brandMentions,
+      description: "Scans for entity recognition signals and external knowledge graph links to build trust."
+    },
+    { 
+      id: "contentQuality", 
+      label: "CONTENT_EEAT", 
+      data: results.contentQuality,
+      description: "Evaluates Experience, Expertise, Authoritativeness, and Trustworthiness signals like authorship and dates."
+    },
+    { 
+      id: "intentMatch", 
+      label: "INTENT_MATCH", 
+      data: results.intentMatch,
+      description: "Evaluates if content structure and conversational headers align with generative query patterns."
+    },
+    { 
+      id: "structural", 
+      label: "STRUCTURAL_GEO", 
+      data: results.structural,
+      description: "Analyzes semantic HTML5 layout, list density, and tabular data presentation."
+    },
+    { 
+      id: "semantic", 
+      label: "SEMANTIC_DEPTH", 
+      data: results.semantic,
+      description: "Evaluates content depth and vocabulary richness for effective semantic clustering by LLMs."
+    },
+    { 
+      id: "media", 
+      label: "MEDIA_CONTEXT", 
+      data: results.media,
+      description: "Checks for multi-modal context optimization including descriptive alt text and captions."
+    },
+    { 
+      id: "sentiment", 
+      label: "TONE_ALIGNMENT", 
+      data: results.sentiment,
+      description: "Evaluates objective and factual tone alignment, as LLMs penalize heavily subjective or hyped content."
     }
   ] : [];
 

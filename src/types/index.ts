@@ -8,5 +8,13 @@ export interface AuditResponse {
   citability: AuditResult;
   technical: AuditResult;
   schema: AuditResult;
+  a2a: AuditResult;
+  brandMentions: AuditResult;
+  contentQuality: AuditResult;
+  intentMatch: AuditResult;
+  structural: AuditResult;
+  semantic: AuditResult;
+  media: AuditResult;
+  sentiment: AuditResult;
   log: string[];
 }
