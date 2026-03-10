@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Bot, Zap, ArrowRight, Download, FileText } from "lucide-react";
+import { useState } from "react";
+import { Bot, Zap, Download, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuditForm } from "@/components/AuditForm";
 import { MetricsGrid } from "@/components/MetricsGrid";
@@ -12,7 +12,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<AuditResponse | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
-  const reportRef = useRef<HTMLDivElement>(null);
 
   const handleAudit = async () => {
     if (!url) return;
@@ -53,15 +52,15 @@ export default function Home() {
     <main className="min-h-screen bg-[#0A0A0A] text-[#DCDCDC] font-mono">
       <style jsx global>{`
         @media print {
-          nav, section#hero, div#audit-form, .no-print {
+          nav, section#hero, div#audit-form, .no-print, .log-container {
             display: none !important;
           }
-          main { background: white !important; color: black !important; }
+          main { background: white !important; color: black !important; padding: 0 !important; }
           .print-only { display: block !important; }
-          .card-glass { border: 1px solid #eee !important; background: white !important; page-break-inside: avoid; }
+          .card-glass { border: 1px solid #eee !important; background: white !important; page-break-inside: avoid; margin-bottom: 1rem !important; }
           .text-white { color: black !important; }
-          .text-accent, h3 { color: #8B4513 !important; }
-          .border-white\\/5 { border-color: #ddd !important; }
+          .text-accent, h3, h2 { color: #8B4513 !important; }
+          .border-white\\/5, .border-b { border-color: #ddd !important; }
         }
         .print-only { display: none; }
       `}</style>
@@ -103,7 +102,7 @@ export default function Home() {
           transition={{ delay: 0.2 }}
           className="max-w-2xl mx-auto text-white/50 text-sm md:text-base leading-relaxed mb-16 tracking-wide"
         >
-          Evaluate your domain against 11 specifications from the Geo Geo Agentic Auditor framework. Detect gaps in AI visibility and download a Technical Remediation Report for your team.
+          Evaluate your domain against 11 specifications from the Geo Agentic Auditor framework. Detect gaps in AI visibility and download a Technical Remediation Report for your team.
         </motion.p>
       </section>
 
@@ -122,7 +121,7 @@ export default function Home() {
               >
                  {/* PRINT HEADER */}
                  <div className="print-only mb-12 border-b-2 border-black pb-8">
-                    <h1 className="text-4xl font-bold uppercase tracking-tighter mb-2">GEO Geo Agentic Auditor</h1>
+                    <h1 className="text-4xl font-bold uppercase tracking-tighter mb-2">Geo Agentic Auditor</h1>
                     <p className="text-xl italic mb-8">Technical Readiness Report: {url}</p>
                     <div className="grid grid-cols-2 gap-8 bg-gray-50 p-6 border border-gray-200">
                        <div>
@@ -179,24 +178,24 @@ export default function Home() {
                  </div>
 
                  {/* Raw Logs */}
-                 <div className="mt-8 border border-white/5 bg-[#0D0D0D] p-6 font-mono text-[11px] h-40 overflow-y-auto text-white/40 tracking-wider no-print">
+                 <div className="log-container mt-8 border border-white/5 bg-[#0D0D0D] p-6 font-mono text-[11px] h-40 overflow-y-auto text-white/40 tracking-wider no-print">
                     {logs.map((log, i) => (
                       <p key={i} className={`mb-1 ${log.includes('[ERROR]') ? 'text-red-400/80' : log.includes('[OK]') ? 'text-[#8FBC8F]/80' : ''}`}>
                         {log}
-                      </p>\
-                    ))}\
+                      </p>
+                    ))}
                  </div>
               </motion.div>
-            )}\
+            )}
          </AnimatePresence>
-      </section>\
-\
-      {/* Footer */}\
-      <footer className=\"border-t border-white/5 py-12 text-center no-print\">\
-         <div className=\"text-xs text-white/30 uppercase tracking-widest\">\
-            Developed by <span className=\"text-[#D4A373] ml-1\">Eduardo Arana & Soda 🥤</span>\
-         </div>\
-      </footer>\
-    </main>\
-  );\
-}\
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-white/5 py-12 text-center no-print">
+         <div className="text-xs text-white/30 uppercase tracking-widest">
+            Developed by <span className="text-[#D4A373] ml-1">Eduardo Arana & Soda 🥤</span>
+         </div>
+      </footer>
+    </main>
+  );
+}
