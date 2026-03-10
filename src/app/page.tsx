@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bot, Zap, Download, FileText } from "lucide-react";
+import { Bot, Zap, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuditForm } from "@/components/AuditForm";
 import { MetricsGrid } from "@/components/MetricsGrid";
@@ -55,12 +55,17 @@ export default function Home() {
           nav, section#hero, div#audit-form, .no-print, .log-container {
             display: none !important;
           }
-          main { background: white !important; color: black !important; padding: 0 !important; }
+          body, main { background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; }
           .print-only { display: block !important; }
-          .card-glass { border: 1px solid #eee !important; background: white !important; page-break-inside: avoid; margin-bottom: 1rem !important; }
-          .text-white { color: black !important; }
-          .text-accent, h3, h2 { color: #8B4513 !important; }
-          .border-white\\/5, .border-b { border-color: #ddd !important; }
+          .report-page { page-break-after: always; padding: 2cm; }
+          .finding-card { border: 1px solid #eee; padding: 1rem; margin-bottom: 1.5rem; page-break-inside: avoid; }
+          .text-accent { color: #8B4513 !important; }
+          .text-muted { color: #666 !important; }
+          .status-ready { color: #2e7d32 !important; }
+          .status-warn { color: #ed6c02 !important; }
+          .status-failed { color: #d32f2f !important; }
+          h2, h3 { color: black !important; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
+          .bg-grey { background: #f9f9f9 !important; }
         }
         .print-only { display: none; }
       `}</style>
@@ -119,24 +124,7 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-12"
               >
-                 {/* PRINT HEADER */}
-                 <div className="print-only mb-12 border-b-2 border-black pb-8">
-                    <h1 className="text-4xl font-bold uppercase tracking-tighter mb-2">Geo Agentic Auditor</h1>
-                    <p className="text-xl italic mb-8">Technical Readiness Report: {url}</p>
-                    <div className="grid grid-cols-2 gap-8 bg-gray-50 p-6 border border-gray-200">
-                       <div>
-                          <p className="text-xs uppercase font-bold text-gray-500">Overall Readiness Score</p>
-                          <p className="text-5xl font-light">{results.overallScore}/100</p>
-                       </div>
-                       <div>
-                          <p className="text-xs uppercase font-bold text-gray-500">Status</p>
-                          <p className={`text-2xl ${results.overallScore >= 80 ? 'text-green-600' : 'text-amber-600'}`}>
-                             {results.overallScore >= 80 ? 'OPTIMIZED' : 'NEEDS ATTENTION'}
-                          </p>
-                       </div>
-                    </div>
-                 </div>
-
+                 {/* WEB REPORT HEADER */}
                  <div className="flex items-center justify-between pb-4 border-b border-white/5 no-print">
                    <div className="flex items-center gap-4 text-xs text-white/40 uppercase tracking-[0.3em]">
                       <span className="w-2 h-2 rounded-full bg-[#8FBC8F] animate-pulse"></span>
@@ -144,15 +132,83 @@ export default function Home() {
                    </div>
                    <button 
                      onClick={printReport}
-                     className="flex items-center gap-2 text-xs text-[#D4A373] hover:text-[#E5B586] transition-colors tracking-widest uppercase font-bold"
+                     className="flex items-center gap-2 text-xs text-[#D4A373] hover:text-[#E5B586] transition-colors tracking-widest uppercase font-bold border border-[#D4A373]/20 px-4 py-2 bg-[#D4A373]/5"
                    >
                      <FileText size={14} /> Download Technical PDF Report
                    </button>
                  </div>
                  
                  <MetricsGrid metrics={metricsData} />
+
+                 {/* PRINT ONLY: DETAILED TECHNICAL REPORT */}
+                 <div className="print-only">
+                    {/* PAGE 1: EXECUTIVE SUMMARY */}
+                    <div className="report-page">
+                       <h1 className="text-4xl font-bold uppercase mb-2">Geo Agentic Auditor</h1>
+                       <p className="text-sm text-muted mb-12 italic border-b pb-4">Comprehensive Technical Readiness Report for {url}</p>
+                       
+                       <div className="mb-12">
+                          <h2 className="text-2xl font-normal mb-6">Executive Summary</h2>
+                          <div className="grid grid-cols-2 gap-4">
+                             <div className="bg-grey p-8 border">
+                                <p className="text-xs uppercase font-bold text-gray-500 mb-2">Overall Score</p>
+                                <p className="text-7xl font-light">{results.overallScore}/100</p>
+                             </div>
+                             <div className="bg-grey p-8 border">
+                                <p className="text-xs uppercase font-bold text-gray-500 mb-2">Technical Status</p>
+                                <p className={`text-3xl font-bold ${results.overallScore >= 80 ? 'status-ready' : 'status-warn'}`}>
+                                   {results.overallScore >= 80 ? 'OPTIMIZED' : 'NEEDS ATTENTION'}
+                                </p>
+                             </div>
+                          </div>
+                       </div>
+
+                       <div className="prose prose-sm max-w-none">
+                          <h3 className="uppercase tracking-widest text-sm font-bold mb-4">Methodology</h3>
+                          <p className="text-xs leading-relaxed text-muted">
+                             This report was generated using the Geo Agentic Auditor framework. The audit evaluates a domain across 11 technical dimensions required for high-fidelity discovery by Generative AI engines (ChatGPT, Claude, Perplexity, SearchGPT). Unlike traditional SEO, which focuses on human search behavior, this audit focuses on machine-readable context, semantic identity resolution, and authoritative citation triggers.
+                          </p>
+                       </div>
+                    </div>
+
+                    {/* PAGE 2-X: DETAILED METRICS */}
+                    <div className="report-page">
+                       <h2 className="text-2xl mb-8 uppercase">Detailed Analysis & Remediation</h2>
+                       
+                       {metricsData.map((m, idx) => (
+                          <div key={m.id} className="finding-card mb-12">
+                             <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-xl font-bold border-none p-0 m-0">{m.label}</h3>
+                                <div className="text-right">
+                                   <span className="text-xs font-bold mr-2 text-muted uppercase">Score:</span>
+                                   <span className="text-xl font-bold">{m.data.score}/100</span>
+                                </div>
+                             </div>
+                             <p className="text-sm italic text-muted mb-6">{m.description}</p>
+                             
+                             <div className="space-y-6">
+                                {m.data.details.map((detail, dIdx) => (
+                                   <div key={dIdx} className="bg-gray-50 p-4 border-l-4 border-black">
+                                      <p className="font-bold text-sm mb-2">{detail.message}</p>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                         <div>
+                                            <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">Analysis</p>
+                                            <p className="text-xs text-muted leading-relaxed">{detail.explanation}</p>
+                                         </div>
+                                         <div>
+                                            <p className="text-[10px] uppercase font-bold text-green-600 mb-1">How To Fix</p>
+                                            <p className="text-xs leading-relaxed font-mono p-2 bg-white border border-gray-100">{detail.remediation}</p>
+                                         </div>
+                                      </div>
+                                   </div>
+                                ))}
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+                 </div>
                  
-                 {/* OVERALL SCORE SECTION */}
+                 {/* WEB ONLY: OVERALL SCORE SECTION */}
                  <div className="mt-12 p-8 border border-[#D4A373]/30 bg-[#D4A373]/5 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden no-print">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4A373] opacity-5 blur-[100px] rounded-full pointer-events-none" />
                     
