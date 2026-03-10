@@ -4,34 +4,55 @@
 
 @layer base {
   :root {
-    --background: 2 6 23;
-    --foreground: 45 212 191;
-    --accent: 99 102 241;
+    --background: 10 10 10;
+    --foreground: 220 220 220;
+    --accent: 212 163 115; /* Warm amber/gold from the screenshot */
   }
 }
 
 body {
-  background-color: #020617;
-  color: #f8fafc;
-  font-family: var(--font-inter), sans-serif;
+  background-color: #0A0A0A;
+  color: #DCDCDC;
+  font-family: var(--font-mono), monospace;
 }
 
-.glow-orb {
-  filter: blur(120px);
-  opacity: 0.15;
-  pointer-events: none;
-  position: fixed;
-  border-radius: 50%;
+.text-accent {
+  color: #D4A373;
+}
+
+.border-accent {
+  border-color: #D4A373;
 }
 
 .card-glass {
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
+  background: rgba(15, 15, 15, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.card-glass.active {
+  border-color: rgba(212, 163, 115, 0.5);
 }
 
 .card-glass:hover {
-  border-color: rgba(45, 212, 191, 0.2);
-  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(212, 163, 115, 0.3);
 }
+
+/* Typography styles matching the image */
+h1, h2, h3, h4 {
+  font-weight: normal;
+  letter-spacing: 0.05em;
+}
+
+.small-caps-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.system-log {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75rem;
+}
+.system-log .ok { color: #8FBC8F; }
+.system-log .warn { color: #D4A373; }
