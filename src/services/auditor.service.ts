@@ -7,6 +7,7 @@ export class AuditorService {
     const baseUrl = `${targetUrl.protocol}//${targetUrl.hostname}`;
     
     const results: AuditResponse = {
+      overallScore: 0,
       citability: { score: 0, status: 'WAITING', details: [] },
       technical: { score: 0, status: 'WAITING', details: [] },
       schema: { score: 0, status: 'WAITING', details: [] },
@@ -27,7 +28,6 @@ export class AuditorService {
       const $ = cheerio.load(html);
 
       // 1. AI CITABILITY (geo-citability)
-      // Analyzes content blocks for "quotability." Evaluates passage self-containment, statistical density, and direct, authoritative answer blocks.
       const paragraphs = $('p').map((_, el) => $(el).text()).get();
       const hasAnswerBlocks = paragraphs.some(p => p.length > 50 && p.length < 300 && /(is|are|was|were|means|refers to)/i.test(p));
       const hasStats = paragraphs.some(p => /\d+(%| percent|k|m|b)/i.test(p));
@@ -42,7 +42,6 @@ export class AuditorService {
       };
 
       // 2. TECHNICAL (geo-crawlers)
-      // Checks for AI-specific technical signals like robots.txt directives for AI crawlers and crawlability.
       const robotsText = await fetch(`${baseUrl}/robots.txt`).then(r => r.text()).catch(() => '');
       const hasAIAllow = /(GPTBot|PerplexityBot|ClaudeBot|Anthropic)/i.test(robotsText);
       const isClientSideRendered = html.includes('id="root"') && $('p').length < 3; // Simple heuristic
@@ -57,7 +56,6 @@ export class AuditorService {
       };
 
       // 3. SEMANTIC SCHEMA (geo-schema)
-      // Validates application/ld+json structured data, hunting for GEO-critical types (Person, Organization, FAQPage).
       const schemas = $('script[type="application/ld+json"]');
       let hasIdentity = false;
       let hasFAQ = false;
@@ -77,17 +75,15 @@ export class AuditorService {
       };
 
       // 4. LLMS.TXT PROTOCOL (geo-llmstxt)
-      // Verification of the machine-readable context standard (llms.txt).
       const hasLLMSTxt = await fetch(`${baseUrl}/llms.txt`).then(r => r.ok).catch(() => false);
 
-      results.a2a = { // Keeping the key as a2a for now, will rename label in UI to LLMSTxt Protocol
+      results.a2a = { 
         score: hasLLMSTxt ? 100 : 0,
         status: hasLLMSTxt ? 'READY' : 'WARN',
         details: [hasLLMSTxt ? 'llms.txt protocol active, providing direct context to AI agents.' : 'No machine-readable context file (llms.txt) found.']
       };
 
       // 5. BRAND AUTHORITY (geo-brand-mentions)
-      // Scans for entity recognition signals to prevent "Entity Collision". (Simulated here based on on-page signals like Wikipedia links or social proof).
       const hasWikiLink = $('a[href*="wikipedia.org"]').length > 0;
       const hasSocialLinks = $('a[href*="linkedin.com"], a[href*="twitter.com"]').length > 0;
 
@@ -101,7 +97,6 @@ export class AuditorService {
       };
 
       // 6. CONTENT E-E-A-T (geo-content)
-      // Evaluates Experience, Expertise, Authoritativeness, and Trustworthiness.
       const hasAuthor = $('meta[name="author"]').length > 0 || $('.author, .byline').length > 0;
       const hasDate = $('meta[property="article:published_time"]').length > 0 || $('time').length > 0;
 
@@ -115,7 +110,6 @@ export class AuditorService {
       };
 
       // 7. INTENT MATCH (geo-intent)
-      // Evaluates if content structure aligns with informational/transactional intents.
       const h1Text = $('h1').text().toLowerCase();
       const hasQuestionH2 = $('h2').map((_, el) => $(el).text()).get().some(text => /\b(how|what|why|when|where|who)\b/i.test(text) || text.includes('?'));
       
@@ -128,7 +122,6 @@ export class AuditorService {
       };
 
       // 8. STRUCTURAL GEO (geo-structure)
-      // Analyzes document outline, lists, and semantic HTML5 tags.
       const hasLists = $('ul, ol').length > 0;
       const hasTables = $('table').length > 0;
       const hasSemanticTags = $('article, section, nav, aside').length > 0;
@@ -143,7 +136,6 @@ export class AuditorService {
       };
 
       // 9. SEMANTIC DEPTH (geo-semantics)
-      // Evaluates vocabulary richness and related entity clustering. (Simulated)
       const textLength = $('body').text().trim().replace(/\s+/g, ' ').length;
       const hasSufficientLength = textLength > 1500;
 
@@ -156,7 +148,6 @@ export class AuditorService {
       };
 
       // 10. MEDIA OPTIMIZATION (geo-media)
-      // Checks for alt text on images and captions.
       const totalImages = $('img').length;
       const imagesWithAlt = $('img[alt]').filter((_, el) => $(el).attr('alt')?.trim() !== '').length;
       const mediaScore = totalImages === 0 ? 100 : Math.round((imagesWithAlt / totalImages) * 100);
@@ -170,8 +161,7 @@ export class AuditorService {
       };
 
       // 11. SENTIMENT ALIGNMENT (geo-sentiment)
-      // Evaluates tone. LLMs prefer objective, neutral, and authoritative tones. (Simulated)
-      const hasExclamation = $('p').text().split('!').length > 5; // Too many exclamations = subjective/hype
+      const hasExclamation = $('p').text().split('!').length > 5;
       
       results.sentiment = {
         score: hasExclamation ? 40 : 100,
@@ -181,7 +171,24 @@ export class AuditorService {
         ]
       };
 
-      results.log.push('[OK] 11-DIMENSIONAL GEO SPECTRUM ANALYSIS COMPLETE.');
+      // Calculate Overall Score
+      const scores = [
+        results.citability.score,
+        results.technical.score,
+        results.schema.score,
+        results.a2a.score,
+        results.brandMentions.score,
+        results.contentQuality.score,
+        results.intentMatch.score,
+        results.structural.score,
+        results.semantic.score,
+        results.media.score,
+        results.sentiment.score
+      ];
+      
+      results.overallScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+
+      results.log.push(`[OK] 11-DIMENSIONAL GEO SPECTRUM ANALYSIS COMPLETE. OVERALL SCORE: ${results.overallScore}/100`);
       return results;
     } catch (e) {
       results.log.push('[ERROR] HANDSHAKE FAILED. SITE UNREACHABLE.');

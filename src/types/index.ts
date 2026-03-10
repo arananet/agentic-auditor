@@ -5,6 +5,7 @@ export interface AuditResult {
 }
 
 export interface AuditResponse {
+  overallScore: number;
   citability: AuditResult;
   technical: AuditResult;
   schema: AuditResult;

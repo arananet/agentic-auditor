@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bot, Zap, ArrowRight } from "lucide-react";
+import { Bot, Zap, ArrowRight, Activity } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuditForm } from "@/components/AuditForm";
 import { MetricsGrid } from "@/components/MetricsGrid";
@@ -160,13 +160,40 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-12"
               >
-                 <div className="flex items-center gap-4 text-[10px] text-white/30 uppercase tracking-[0.3em] pb-4 border-b border-white/5">
-                    <span className="w-2 h-2 rounded-full bg-[#8FBC8F] animate-pulse"></span>
-                    Diagnostic_Report_Loaded
+                 <div className="flex items-center justify-between pb-4 border-b border-white/5">
+                   <div className="flex items-center gap-4 text-[10px] text-white/30 uppercase tracking-[0.3em]">
+                      <span className="w-2 h-2 rounded-full bg-[#8FBC8F] animate-pulse"></span>
+                      Diagnostic_Report_Loaded
+                   </div>
                  </div>
                  
                  <MetricsGrid metrics={metricsData} />
                  
+                 {/* OVERALL SCORE SECTION */}
+                 <div className="mt-12 p-8 border border-[#D4A373]/30 bg-[#D4A373]/5 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4A373] opacity-5 blur-[100px] rounded-full pointer-events-none" />
+                    
+                    <div>
+                      <h2 className="text-xl text-[#D4A373] tracking-[0.2em] uppercase mb-2">Overall GEO Readiness</h2>
+                      <p className="text-xs text-white/50 max-w-lg leading-relaxed">
+                        This composite score represents your domain's total compatibility with Generative AI engines. Scores above 80 indicate high probability of accurate citation and entity resolution.
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-6">
+                      <div className="text-right">
+                        <div className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">Status</div>
+                        <div className={`text-sm tracking-widest ${results.overallScore >= 80 ? 'text-[#8FBC8F]' : results.overallScore >= 50 ? 'text-[#D4A373]' : 'text-red-400'}`}>
+                          {results.overallScore >= 80 ? 'OPTIMIZED' : results.overallScore >= 50 ? 'NEEDS_WORK' : 'POOR'}
+                        </div>
+                      </div>
+                      
+                      <div className="text-6xl font-light text-white tracking-tighter">
+                        {results.overallScore}<span className="text-xl text-white/20 ml-1">/100</span>
+                      </div>
+                    </div>
+                 </div>
+
                  {/* Raw Logs */}
                  <div className="mt-8 border border-white/5 bg-[#0D0D0D] p-6 font-mono text-[10px] h-40 overflow-y-auto text-white/30 tracking-wider">
                     {logs.map((log, i) => (
