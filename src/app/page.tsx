@@ -52,12 +52,15 @@ export default function Home() {
     <main className="min-h-screen bg-[#0A0A0A] text-[#DCDCDC] font-mono">
       <style jsx global>{`
         @media print {
+          @page {
+             margin: 0;
+          }
           nav, section#hero, div#audit-form, .no-print, .log-container {
             display: none !important;
           }
           body, main { background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; }
           .print-only { display: block !important; }
-          .report-page { page-break-after: always; padding: 2cm; }
+          .report-page { page-break-after: always; padding: 2cm; min-height: 29.7cm; position: relative; }
           .finding-card { border: 1px solid #eee; padding: 1rem; margin-bottom: 1.5rem; page-break-inside: avoid; }
           .text-accent { color: #8B4513 !important; }
           .text-muted { color: #666 !important; }
@@ -66,6 +69,7 @@ export default function Home() {
           .status-failed { color: #d32f2f !important; }
           h2, h3 { color: black !important; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
           .bg-grey { background: #f9f9f9 !important; }
+          .report-footer { position: absolute; bottom: 1cm; left: 2cm; font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 2px; }
         }
         .print-only { display: none; }
       `}</style>
@@ -169,6 +173,8 @@ export default function Home() {
                              This report was generated using the Geo Agentic Auditor framework. The audit evaluates a domain across 11 technical dimensions required for high-fidelity discovery by Generative AI engines (ChatGPT, Claude, Perplexity, SearchGPT). Unlike traditional SEO, which focuses on human search behavior, this audit focuses on machine-readable context, semantic identity resolution, and authoritative citation triggers.
                           </p>
                        </div>
+                       
+                       <div className="report-footer">Geo Agentic Auditor</div>
                     </div>
 
                     {/* PAGE 2-X: DETAILED METRICS */}
@@ -205,6 +211,20 @@ export default function Home() {
                              </div>
                           </div>
                        ))}
+                       <div className="report-footer">Geo Agentic Auditor</div>
+                    </div>
+
+                    {/* FINAL PAGE: CREDITS */}
+                    <div className="report-page flex flex-col items-center justify-center text-center">
+                       <Bot size={48} className="mb-6 text-gray-300" />
+                       <h2 className="text-3xl font-bold uppercase tracking-widest mb-4 border-none">Geo Agentic Auditor</h2>
+                       <p className="text-sm text-muted max-w-md mb-12">
+                          High-fidelity readiness evaluation for the generative search era.
+                       </p>
+                       <div className="border-t border-gray-100 pt-8">
+                          <p className="text-xs text-gray-400 uppercase tracking-[0.4em] mb-2">Developed By</p>
+                          <p className="text-xl font-bold">Eduardo Arana & Soda 🥤</p>
+                       </div>
                     </div>
                  </div>
                  
