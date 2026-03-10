@@ -53,9 +53,20 @@ export const MetricsGrid = ({ metrics }: Props) => (
               <div className="text-[8px] text-white/40 group-hover:text-white/70 transition-colors uppercase tracking-widest mb-4">Findings</div>
               <ul className="space-y-3">
                 {m.data.details.slice(0, 2).map((detail, idx) => (
-                  <li key={idx} className="text-[9px] text-white/60 group-hover:text-white/90 transition-colors leading-relaxed flex items-start gap-3">
+                  <li key={idx} className="relative group/tooltip text-[9px] text-white/60 group-hover:text-white/90 transition-colors leading-relaxed flex items-start gap-3 cursor-help">
                     <span className="text-[#D4A373] mt-0.5">-</span> 
-                    <span className="">{detail.replace(/\[|\]/g, '')}</span>
+                    <span className="border-b border-dashed border-white/20 pb-0.5">{detail.message}</span>
+                    
+                    {/* Tooltip Bubble */}
+                    <div className="absolute bottom-[120%] left-0 w-64 bg-[#151515] border border-[#D4A373]/30 p-4 rounded-sm shadow-[0_10px_40px_rgba(0,0,0,0.8)] z-[100] text-left opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-200">
+                       <div className="text-[#D4A373] text-[9px] font-bold mb-1 uppercase tracking-widest">Analysis</div>
+                       <div className="text-white/70 text-[10px] mb-4 leading-relaxed">{detail.explanation}</div>
+                       <div className="text-[#8FBC8F] text-[9px] font-bold mb-1 uppercase tracking-widest">Remediation</div>
+                       <div className="text-white/70 text-[10px] leading-relaxed">{detail.remediation}</div>
+                       
+                       {/* Arrow pointing down */}
+                       <div className="absolute -bottom-2 left-4 w-4 h-4 bg-[#151515] border-b border-r border-[#D4A373]/30 transform rotate-45"></div>
+                    </div>
                   </li>
                 ))}
               </ul>

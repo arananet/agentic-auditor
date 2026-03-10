@@ -1,7 +1,13 @@
+export interface AuditFinding {
+  message: string;
+  explanation: string;
+  remediation: string;
+}
+
 export interface AuditResult {
   score: number;
   status: 'READY' | 'WARN' | 'FAILED' | 'SCANNING' | 'WAITING';
-  details: string[];
+  details: AuditFinding[];
 }
 
 export interface AuditResponse {
