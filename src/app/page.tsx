@@ -72,7 +72,7 @@ export default function Home() {
           <div className="w-8 h-8 bg-[#1A1A1A] border border-white/10 rounded-sm flex items-center justify-center">
             <Bot className="text-[#D4A373]" size={18} />
           </div>
-          <span className="font-normal text-sm tracking-[0.2em] text-white/80 uppercase">Agentic Auditor</span>
+          <span className="font-normal text-sm tracking-[0.2em] text-white/80 uppercase">Geo Agentic Auditor</span>
         </div>
       </nav>
 
@@ -103,7 +103,7 @@ export default function Home() {
           transition={{ delay: 0.2 }}
           className="max-w-2xl mx-auto text-white/50 text-sm md:text-base leading-relaxed mb-16 tracking-wide"
         >
-          Evaluate your domain against 11 specifications from the Geo Agentic Auditor framework. Detect gaps in AI visibility and download a Technical Remediation Report for your team.
+          Evaluate your domain against 11 specifications from the Geo Geo Agentic Auditor framework. Detect gaps in AI visibility and download a Technical Remediation Report for your team.
         </motion.p>
       </section>
 
@@ -122,7 +122,7 @@ export default function Home() {
               >
                  {/* PRINT HEADER */}
                  <div className="print-only mb-12 border-b-2 border-black pb-8">
-                    <h1 className="text-4xl font-bold uppercase tracking-tighter mb-2">GEO Agentic Auditor</h1>
+                    <h1 className="text-4xl font-bold uppercase tracking-tighter mb-2">GEO Geo Agentic Auditor</h1>
                     <p className="text-xl italic mb-8">Technical Readiness Report: {url}</p>
                     <div className="grid grid-cols-2 gap-8 bg-gray-50 p-6 border border-gray-200">
                        <div>

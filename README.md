@@ -1,4 +1,4 @@
-#  GEO Agentic Auditor
+#  GEO Geo Agentic Auditor
 
 > **The high-fidelity readiness check for the Generative Era.**
 
@@ -6,7 +6,7 @@ Developed by **Eduardo Arana** and **Soda 🥤**.
 
 ##  Project Vision
 
-The **Agentic Auditor** is a production-grade diagnostic tool designed to evaluate if a website is optimized for discovery and citation by Generative AI engines (ChatGPT, Claude, Perplexity, Gemini, and SearchGPT). 
+The **Geo Agentic Auditor** is a production-grade diagnostic tool designed to evaluate if a website is optimized for discovery and citation by Generative AI engines (ChatGPT, Claude, Perplexity, Gemini, and SearchGPT). 
 
 Unlike traditional SEO, which focuses on search engine ranking, this auditor measures **Generative Engine Optimization (GEO)**—ensuring your digital footprint is machine-readable, authoritative, and "agent-friendly."
 
