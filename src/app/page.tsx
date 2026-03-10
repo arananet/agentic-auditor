@@ -13,13 +13,13 @@ export default function Home() {
   const [results, setResults] = useState<AuditResponse | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
 
-  const handleAudit = async () => {
+  const handleAudit = async (token: string) => {
     if (!url) return;
     setLoading(true);
     setResults(null);
     setLogs(["[INIT] Handshaking with target domain...", "[SCAN] Probing GEO spectrum levels..."]);
     try {
-      const res = await fetch("/api/audit", { method: "POST", body: JSON.stringify({ url }) });
+      const res = await fetch("/api/audit", { method: "POST", body: JSON.stringify({ url, token }) });
       const data = await res.json();
       setResults(data);
       setLogs(prev => [...prev, ...data.log]);
@@ -118,7 +118,7 @@ export default function Home() {
       {/* Audit Tool Section */}
       <section id="audit-section" className="max-w-[1400px] mx-auto px-6 pb-32">
          <div id="audit-form" className="max-w-3xl mx-auto mb-16">
-            <AuditForm url={url} loading={loading} onUrlChange={setUrl} onAudit={handleAudit} />
+            <AuditForm url={url} loading={loading} onUrlChange={setUrl} onAudit={(token) => handleAudit(token)} />
          </div>
          
          <AnimatePresence>
