@@ -15,54 +15,54 @@ export const MetricsGrid = ({ metrics }: Props) => (
         transition={{ delay: i * 0.1 }}
         className="card-glass p-8 relative flex flex-col h-full font-mono group transition-colors duration-500 hover:bg-[#151515]"
       >
-        <div className="text-[8px] text-white/30 group-hover:text-white/60 transition-colors uppercase tracking-[0.2em] mb-6">
+        <div className="text-[9px] text-white/30 group-hover:text-white/60 transition-colors uppercase tracking-[0.2em] mb-6">
           DATA_RECORD_00{i+1}
         </div>
         
-        <h3 className="text-[15px] text-[#D4A373] group-hover:text-[#E5B586] transition-colors mb-5 uppercase tracking-[0.15em] font-normal">
+        <h3 className="text-lg text-[#D4A373] group-hover:text-[#E5B586] transition-colors mb-5 uppercase tracking-[0.15em] font-normal">
           {m.label.replace(' ', '_')}
         </h3>
         
-        <p className="text-[10px] text-white/50 group-hover:text-white/80 transition-colors leading-[1.8] mb-10 flex-grow pr-4">
+        <p className="text-xs text-white/50 group-hover:text-white/80 transition-colors leading-relaxed mb-10 flex-grow pr-4">
           {m.description}
         </p>
         
         <div className="bg-[#0A0A0A] border border-white/10 group-hover:border-white/20 transition-colors p-5 mt-auto">
-          <div className="text-[7px] text-white/30 group-hover:text-white/50 transition-colors uppercase tracking-[0.2em] mb-5">
+          <div className="text-[8px] text-white/30 group-hover:text-white/50 transition-colors uppercase tracking-[0.2em] mb-5">
             // TECHNICAL_SPECIFICATIONS
           </div>
           
           <div className="flex justify-between items-end mb-6">
             <div>
-              <div className="text-[8px] text-white/40 group-hover:text-white/70 transition-colors uppercase tracking-widest mb-2">Status</div>
-              <div className={`text-[11px] uppercase tracking-widest ${m.data.status === 'FAILED' ? 'text-red-400 group-hover:text-red-300' : m.data.status === 'WARN' ? 'text-[#D4A373] group-hover:text-[#E5B586]' : 'text-[#8FBC8F] group-hover:text-[#A3D1A3]'} transition-colors`}>
+              <div className="text-[9px] text-white/40 group-hover:text-white/70 transition-colors uppercase tracking-widest mb-2">Status</div>
+              <div className={`text-xs font-bold uppercase tracking-widest ${m.data.status === 'FAILED' ? 'text-red-400 group-hover:text-red-300' : m.data.status === 'WARN' ? 'text-[#D4A373] group-hover:text-[#E5B586]' : 'text-[#8FBC8F] group-hover:text-[#A3D1A3]'} transition-colors`}>
                 {m.data.status}
               </div>
             </div>
             
             <div className="text-right">
-              <div className="text-[8px] text-white/40 group-hover:text-white/70 transition-colors uppercase tracking-widest mb-2">Score</div>
-              <div className="text-sm text-white/90 font-light">
-                {m.data.score}<span className="text-white/40 group-hover:text-white/60 transition-colors text-xs">/100</span>
+              <div className="text-[9px] text-white/40 group-hover:text-white/70 transition-colors uppercase tracking-widest mb-2">Score</div>
+              <div className="text-base text-white/90 font-light">
+                {m.data.score}<span className="text-white/40 group-hover:text-white/60 transition-colors text-xs ml-1">/100</span>
               </div>
             </div>
           </div>
           
           {m.data.details && m.data.details.length > 0 && (
             <div className="pt-5 border-t border-white/10 group-hover:border-white/20 transition-colors">
-              <div className="text-[8px] text-white/40 group-hover:text-white/70 transition-colors uppercase tracking-widest mb-4">Findings</div>
+              <div className="text-[9px] text-white/40 group-hover:text-white/70 transition-colors uppercase tracking-widest mb-4">Findings</div>
               <ul className="space-y-3">
                 {m.data.details.slice(0, 2).map((detail, idx) => (
-                  <li key={idx} className="relative group/tooltip text-[9px] text-white/60 group-hover:text-white/90 transition-colors leading-relaxed flex items-start gap-3 cursor-help">
+                  <li key={idx} className="relative group/tooltip text-xs text-white/60 group-hover:text-white/90 transition-colors leading-relaxed flex items-start gap-3 cursor-help">
                     <span className="text-[#D4A373] mt-0.5">-</span> 
                     <span className="border-b border-dashed border-white/20 pb-0.5">{detail.message}</span>
                     
                     {/* Hover Bubble / Tooltip */}
-                    <div className="absolute bottom-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-[280px] bg-[#111111] border border-[#D4A373]/40 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.9)] z-[100] text-left opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-300 transform translate-y-2 group-hover/tooltip:translate-y-0 pointer-events-none">
-                       <div className="text-[#D4A373] text-[8px] font-bold mb-2 uppercase tracking-[0.2em] border-b border-[#D4A373]/20 pb-1">Analysis</div>
-                       <div className="text-white/80 text-[10px] mb-5 leading-[1.6]">{detail.explanation}</div>
-                       <div className="text-[#8FBC8F] text-[8px] font-bold mb-2 uppercase tracking-[0.2em] border-b border-[#8FBC8F]/20 pb-1">Remediation</div>
-                       <div className="text-white/80 text-[10px] leading-[1.6]">{detail.remediation}</div>
+                    <div className="absolute bottom-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-[320px] bg-[#111111] border border-[#D4A373]/40 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.9)] z-[100] text-left opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-300 transform translate-y-2 group-hover/tooltip:translate-y-0 pointer-events-none">
+                       <div className="text-[#D4A373] text-[10px] font-bold mb-2 uppercase tracking-[0.2em] border-b border-[#D4A373]/20 pb-1">Analysis</div>
+                       <div className="text-white/80 text-xs mb-5 leading-relaxed">{detail.explanation}</div>
+                       <div className="text-[#8FBC8F] text-[10px] font-bold mb-2 uppercase tracking-[0.2em] border-b border-[#8FBC8F]/20 pb-1">Remediation</div>
+                       <div className="text-white/80 text-xs leading-relaxed font-mono bg-black/50 p-2 rounded border border-white/5">{detail.remediation}</div>
                        
                        {/* Arrow pointing down */}
                        <div className="absolute -bottom-[6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-[#111111] border-b border-r border-[#D4A373]/40 transform rotate-45"></div>
