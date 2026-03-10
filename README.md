@@ -1,59 +1,59 @@
-#  GEO Geo Agentic Auditor
+# Geo Agentic Auditor 🥤
 
-> **The high-fidelity readiness check for the Generative Era.**
+> **High-fidelity readiness evaluation for the generative search era.**
 
-Developed by **Eduardo Arana** and **Soda 🥤**.
+Geo Agentic Auditor is a production-grade diagnostic tool designed to evaluate if a website is optimized for discovery and citation by Generative AI engines (ChatGPT, Claude, Perplexity, Gemini, and SearchGPT).
 
-##  Project Vision
+## Technical Architecture
 
-The **Geo Agentic Auditor** is a production-grade diagnostic tool designed to evaluate if a website is optimized for discovery and citation by Generative AI engines (ChatGPT, Claude, Perplexity, Gemini, and SearchGPT). 
+- **Frontend**: Next.js 14, Tailwind CSS, Framer Motion.
+- **Backend**: Next.js Route Handlers.
+- **Security**: Cloudflare Turnstile (Bot Protection).
+- **Deployment**: Configured for Railway.
 
-Unlike traditional SEO, which focuses on search engine ranking, this auditor measures **Generative Engine Optimization (GEO)**—ensuring your digital footprint is machine-readable, authoritative, and "agent-friendly."
+## Security & Bot Protection
 
-##  Intelligence Engine (The GEO Spectrum)
+This project uses **Cloudflare Turnstile** to protect the auditing engine from automated abuse. 
 
-The auditing logic is powered by a suite of **11 specialized GEO Skills** adapted from the [geo-seo-claude](https://github.com/zubair-trabzada/geo-seo-claude) framework. The system orchestrates these skills to analyze a domain across five critical dimensions:
+### Required Environment Variables
 
-### 1. AI Citability (`geo-citability`)
-Analyzes content blocks for "quotability." We evaluate passage self-containment, statistical density, and the presence of direct, authoritative answer blocks that LLMs prefer for citations.
+To run this project or deploy it to Railway/GitHub, you must set the following secrets:
 
-### 2. Brand Authority & Mentions (`geo-brand-mentions`)
-Scans third-party signals across the web (Reddit, Wikipedia, LinkedIn) to score entity recognition. This prevents "Entity Collision" and ensures AI models correctly distinguish the brand.
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Your Cloudflare Turnstile Site Key. |
+| `TURNSTILE_SECRET_KEY` | Your Cloudflare Turnstile Secret Key (Keep this secret!). |
 
-### 3. Technical GEO Infrastructure (`geo-crawlers` + `geo-llmstxt`)
-Checks for AI-specific technical signals:
-- **llms.txt**: Verification of the new machine-readable context standard.
-- **robots.txt**: Explicit directives for AI crawlers (GPTBot, PerplexityBot).
-- **Crawlability**: Ensuring content isn't trapped behind client-side rendering walls.
+### Setup Instructions
 
-### 4. Content E-E-A-T (`geo-content`)
-Evaluates **Experience, Expertise, Authoritativeness, and Trustworthiness**. This assesses author credentials, source citations, and content freshness—the signals that modern AI search uses to weigh reliability.
+1.  Obtain your keys from the [Cloudflare Dashboard](https://dash.cloudflare.com/?to=/:account/turnstile).
+2.  Add them to your `.env.local` file for local development.
+3.  Add them as **Environment Variables** in your Railway project or **GitHub Secrets**.
 
-### 5. Semantic Schema (`geo-schema`)
-Validates `application/ld+json` structured data. We specifically hunt for GEO-critical types: `Person`, `Organization`, `FAQPage`, and `ProfessionalService` to build a deterministic map for engines.
+## Intelligence Engine (The 11 GEO Skills)
 
-##  Technical Architecture
+The system analyzes domains across 11 critical dimensions adapted from the `geo-seo-claude` framework:
 
-This project is a high-performance **Next.js 14** application with a separated concern architecture:
+1.  **Citability**: Content "quotability" for LLM extraction.
+2.  **Technical GEO**: Directives for AI crawlers (robots.txt).
+3.  **Semantic Schema**: Identity resolution via JSON-LD.
+4.  **LLMS_TXT**: AI-specific context handshake standard.
+5.  **Brand Authority**: Entity recognition and external trust signals.
+6.  **EEAT**: Experience, Expertise, Authoritativeness, and Trustworthiness.
+7.  **Intent Match**: Alignment with conversational query patterns.
+8.  **Structural GEO**: Semantic HTML5 and data presentation.
+9.  **Semantic Depth**: Context volume for deep mapping.
+10. **Media Context**: Vision-language model accessibility (Alt text).
+11. **Tone Alignment**: Objective vs. Sensational sentiment.
 
-- **Frontend (`/src/components`)**: Modular React components styled with a high-contrast terminal aesthetic (Amber/Neon Green).
-- **Backend (`/src/app/api/audit`)**: Route Handlers acting as the controller layer.
-- **Services (`/src/services`)**: Business logic isolation. The `AuditorService` handles the heavy lifting of DOM traversal and HTTP probes using `cheerio`.
-- **Externals**: Optimized for **Railway** deployment using Webpack externals for server-side processing libraries.
-
-##  Getting Started
+## Development
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/arananet/agentic-auditor.git
-
-# 2. Install dependencies
+# Install dependencies
 npm install
 
-# 3. Launch the terminal
+# Start development server
 npm run dev
 ```
 
-##  Deployment
-
-Configured for instant deployment on **Railway** via the included `Dockerfile` and `railway.json`.
+Developed by **Eduardo Arana & Soda 🥤**.

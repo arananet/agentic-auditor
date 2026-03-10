@@ -1,5 +1,5 @@
 import { Globe, ArrowRight } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Props {
   url: string;
@@ -10,7 +10,6 @@ interface Props {
 
 declare global {
   interface Window {
-    onloadTurnstileCallback: () => void;
     turnstile: any;
   }
 }
@@ -18,6 +17,7 @@ declare global {
 export const AuditForm = ({ url, loading, onUrlChange, onAudit }: Props) => {
   const turnstileRef = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
     // Load Turnstile Script
@@ -30,23 +30,30 @@ export const AuditForm = ({ url, loading, onUrlChange, onAudit }: Props) => {
     script.onload = () => {
       if (window.turnstile && turnstileRef.current) {
         widgetId.current = window.turnstile.render(turnstileRef.current, {
-          sitekey: "0x4AAAAAAA4Y6Yf2x6C8_XlI", // Using the Cloudflare Always Pass testing key
+          sitekey: "0x4AAAAAACo07B70a2WlqXNQ",
           theme: "dark",
-          callback: (token: string) => {
-            // Token is ready
+          callback: (receivedToken: string) => {
+            setToken(receivedToken);
+          },
+          'expired-callback': () => {
+            setToken(null);
+          },
+          'error-callback': () => {
+            setToken(null);
           },
         });
       }
     };
 
     return () => {
-      document.body.removeChild(script);
+      if (script.parentNode) {
+        document.body.removeChild(script);
+      }
     };
   }, []);
 
   const handleSubmit = () => {
-    const token = window.turnstile.getResponse(widgetId.current);
-    if (!token && !process.env.NEXT_PUBLIC_DEV_MODE) {
+    if (!token) {
       alert("Please complete the security check.");
       return;
     }
@@ -68,15 +75,14 @@ export const AuditForm = ({ url, loading, onUrlChange, onAudit }: Props) => {
         />
         <button 
           onClick={handleSubmit}
-          disabled={loading}
-          className={`bg-[#D4A373] text-black px-8 py-4 text-xs font-bold uppercase tracking-widest transition-all flex justify-center items-center gap-2 ${loading ? 'opacity-50' : 'hover:bg-[#E5B586]'}`}
+          disabled={loading || !token}
+          className={`bg-[#D4A373] text-black px-8 py-4 text-xs font-bold uppercase tracking-widest transition-all flex justify-center items-center gap-2 ${loading || !token ? 'opacity-30 cursor-not-allowed' : 'hover:bg-[#E5B586]'}`}
         >
           {loading ? "Scanning..." : "Initialize"} <ArrowRight size={14} />
         </button>
       </div>
       
-      {/* Turnstile Widget Container */}
-      <div className="flex justify-center md:justify-start">
+      <div className="flex justify-center md:justify-start min-h-[65px]">
         <div ref={turnstileRef}></div>
       </div>
     </div>
