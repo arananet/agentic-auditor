@@ -25,17 +25,24 @@ export class SentimentAudit implements IAuditStrategy {
     });
 
     let finalScore = Math.max(0, Math.min(100, 50 + trustScore - weakPenalty));
-    
+    let explanation = 'A weighted analysis of brand authority and clarity.';
+    let remediation = 'Highlight awards, certifications, and guarantees prominently.';
+    let hasLlmMessage = false;
+
     // 2. Deep Semantic Check: LLM Override (if configured)
     if (LlmAnalyzer.isConfigured()) {
       const systemPrompt = `You are evaluating website text for "Brand Sentiment & Authority" under Generative Engine Optimization (GEO) standards.
 Evaluate the text's stance: Does it sound like an undisputed industry leader, or is the language passive, weak, or apologetic? 
 Look for strong trust markers (certifications, guarantees, expertise) versus weak qualifiers (might, maybe, try to). 
-Return 100 for absolute authoritative domain expertise, 50 for average marketing copy, and 0 for extremely passive/untrustworthy language.`;
+Score 100 for absolute authoritative domain expertise, 50 for average marketing copy, and 0 for extremely passive/untrustworthy language. Provide specific feedback on the tone.`;
       
-      const llmScore = await LlmAnalyzer.analyzeSemantics(text.slice(0, 3000), systemPrompt);
-      // Give the LLM more weight (80%) than the dumb regex (20%)
-      finalScore = Math.round((finalScore * 0.2) + (llmScore * 0.8));
+      const llmResult = await LlmAnalyzer.analyzeWithFeedback(text.slice(0, 3000), systemPrompt);
+      if (llmResult) {
+        finalScore = Math.round((finalScore * 0.2) + (llmResult.score * 0.8));
+        explanation = `LLM Analysis: ${llmResult.explanation}`;
+        remediation = llmResult.remediation;
+        hasLlmMessage = true;
+      }
     }
 
     return {
@@ -43,7 +50,7 @@ Return 100 for absolute authoritative domain expertise, 50 for average marketing
       status: finalScore >= 70 ? 'READY' : finalScore >= 40 ? 'WARN' : 'FAILED',
       details: [
         { message: trustScore > 0 ? 'High trust markers detected.' : 'Low density of authoritative vocabulary.', explanation: 'AI agents synthesize the "sentiment" or "stance" of your brand based on vocabulary confidence.', remediation: 'Replace passive or uncertain language with definitive, authoritative statements.' },
-        { message: `Authority Score: ${finalScore}/100`, explanation: 'A weighted analysis of brand authority and clarity.', remediation: 'Highlight awards, certifications, and guarantees prominently.' }
+        { message: hasLlmMessage ? `Authority Score: ${finalScore}/100 (Deep Semantic)` : `Authority Score: ${finalScore}/100 (Heuristic)`, explanation, remediation }
       ]
     };
   }

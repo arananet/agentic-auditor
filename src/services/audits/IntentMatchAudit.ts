@@ -20,6 +20,9 @@ export class IntentMatchAudit implements IAuditStrategy {
     });
 
     let finalScore = Math.min(100, intentScore);
+    let explanation = 'Generative search matches user queries directly to semantic headings.';
+    let remediation = 'Rewrite generic H2s as common questions (e.g., "What is [Product]?", "How [Product] Works").';
+    let hasLlmMessage = false;
 
     // 2. Deep Semantic Engine: User Intent Evaluation via Cloudflare AI
     if (LlmAnalyzer.isConfigured()) {
@@ -27,18 +30,22 @@ export class IntentMatchAudit implements IAuditStrategy {
 Your goal is to determine if these headings directly answer common user queries, tutorials, comparisons (vs), or technical questions.
 If the headings are generic corporate fluff ("Our Vision", "Welcome", "Services"), score it 0.
 If the headings are highly actionable, conversational, and question-driven ("What is X?", "How to do Y", "X vs Y"), score it 100.
-Evaluate the following array of headings based strictly on their conversational and problem-solving utility.`;
+Evaluate the array of headings based strictly on their conversational and problem-solving utility.`;
 
-      const llmScore = await LlmAnalyzer.analyzeSemantics(JSON.stringify(headings), systemPrompt);
-      // Give the LLM priority for contextual understanding
-      finalScore = Math.round((finalScore * 0.2) + (llmScore * 0.8));
+      const llmResult = await LlmAnalyzer.analyzeWithFeedback(JSON.stringify(headings), systemPrompt);
+      if (llmResult) {
+        finalScore = Math.round((finalScore * 0.2) + (llmResult.score * 0.8));
+        explanation = `LLM Analysis: ${llmResult.explanation}`;
+        remediation = llmResult.remediation;
+        hasLlmMessage = true;
+      }
     }
 
     return {
       score: finalScore,
       status: finalScore >= 60 ? 'READY' : finalScore > 0 ? 'WARN' : 'FAILED',
       details: [
-        { message: finalScore > 50 ? 'Conversational headings found.' : 'Headings are purely topical.', explanation: 'Generative search matches user queries directly to semantic headings.', remediation: 'Rewrite generic H2s as common questions (e.g., "What is [Product]?", "How [Product] Works").' }
+        { message: finalScore > 50 ? 'Conversational headings found.' : 'Headings are purely topical.', explanation: hasLlmMessage ? explanation : 'Generative search relies on headings matching user search queries directly.', remediation: hasLlmMessage ? remediation : 'Rewrite H2s as common queries.' }
       ]
     };
   }
