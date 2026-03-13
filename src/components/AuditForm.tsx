@@ -1,4 +1,4 @@
-import { Globe, ArrowRight } from "lucide-react";
+import { Globe, ArrowRight, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface Props {
@@ -78,7 +78,15 @@ export const AuditForm = ({ url, loading, onUrlChange, onAudit }: Props) => {
           disabled={loading || !token}
           className={`bg-[#D4A373] text-black px-8 py-4 text-xs font-bold uppercase tracking-widest transition-all flex justify-center items-center gap-2 ${loading || !token ? 'opacity-30 cursor-not-allowed' : 'hover:bg-[#E5B586]'}`}
         >
-          {loading ? "Scanning..." : "Initialize"} <ArrowRight size={14} />
+          {loading ? (
+            <>
+              <Loader2 size={14} className="animate-spin" /> Scanning...
+            </>
+          ) : (
+            <>
+              Initialize <ArrowRight size={14} />
+            </>
+          )}
         </button>
       </div>
       
