@@ -17,7 +17,7 @@ export class ContentQualityAudit implements IAuditStrategy {
 
     return {
       score,
-      status: score >= 75 ? 'READY' : score >= 50 ? 'WARN' : 'ERROR',
+      status: score >= 75 ? 'READY' : score >= 50 ? 'WARN' : 'FAILED',
       details: [
         { message: hasAuthorMeta ? 'Authorship defined.' : 'Missing explicit author metadata.', explanation: 'E-E-A-T signals require transparent authorship.', remediation: 'Add <meta name="author"> or visible author bylines.' },
         { message: hasPublishDate ? 'Content freshness indicated.' : 'Missing publish dates.', explanation: 'AI agents prioritize recent data over evergreen content without a timestamp.', remediation: 'Use HTML5 <time> tags for articles.' },

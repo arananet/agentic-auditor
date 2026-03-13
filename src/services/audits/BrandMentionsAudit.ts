@@ -15,7 +15,7 @@ export class BrandMentionsAudit implements IAuditStrategy {
 
     return {
       score: totalScore,
-      status: totalScore >= 75 ? 'READY' : totalScore >= 40 ? 'WARN' : 'ERROR',
+      status: totalScore >= 75 ? 'READY' : totalScore >= 40 ? 'WARN' : 'FAILED',
       details: [
         { message: socialScore > 0 ? 'Social proof links found.' : 'Missing authority outbound links.', explanation: 'AI uses Wikipedia, LinkedIn, and Twitter to cross-reference entities.', remediation: 'Add external links to your company LinkedIn or founder profiles.' },
         { message: hasAboutUs > 0 ? 'Clear "About" section detected.' : 'No identifiable "About" page link.', explanation: 'Generative engines scrape the About page to synthesize "Who is X" queries.', remediation: 'Create and prominently link an "About Us" page.' }

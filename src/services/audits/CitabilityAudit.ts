@@ -34,7 +34,7 @@ export class CitabilityAudit implements IAuditStrategy {
 
     return {
       score: totalScore,
-      status: totalScore >= 80 ? 'READY' : totalScore >= 40 ? 'WARN' : 'ERROR',
+      status: totalScore >= 80 ? 'READY' : totalScore >= 40 ? 'WARN' : 'FAILED',
       details: [
         {
           message: totalScore >= 60 ? 'High density of answer blocks detected.' : 'Insufficient definition blocks.',

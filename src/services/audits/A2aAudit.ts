@@ -13,7 +13,7 @@ export class A2aAudit implements IAuditStrategy {
 
     return {
       score,
-      status: score === 100 ? 'READY' : 'ERROR',
+      status: score === 100 ? 'READY' : 'FAILED',
       details: [
         { message: score === 100 ? 'Valid llms.txt found.' : 'Missing or empty llms.txt.', explanation: 'Agent-to-Agent (A2A) handshakes require standard API texts like llms.txt.', remediation: 'Create a root /llms.txt summarizing the brand.' }
       ]

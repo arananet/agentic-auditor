@@ -33,7 +33,7 @@ export class SentimentAudit implements IAuditStrategy {
 
     return {
       score: finalScore,
-      status: finalScore >= 70 ? 'READY' : finalScore >= 40 ? 'WARN' : 'ERROR',
+      status: finalScore >= 70 ? 'READY' : finalScore >= 40 ? 'WARN' : 'FAILED',
       details: [
         { message: trustScore > 0 ? 'High trust markers detected.' : 'Low density of authoritative vocabulary.', explanation: 'AI agents synthesize the "sentiment" or "stance" of your brand based on vocabulary confidence.', remediation: 'Replace passive or uncertain language with definitive, authoritative statements.' },
         { message: `Semantic Confidence: ${finalScore}%`, explanation: 'A weighted NLP/heuristic analysis of brand authority and clarity.', remediation: 'Highlight awards, certifications, and guarantees.' }

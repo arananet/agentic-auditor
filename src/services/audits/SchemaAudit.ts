@@ -27,7 +27,7 @@ export class SchemaAudit implements IAuditStrategy {
 
     return {
       score: totalScore,
-      status: totalScore >= 75 ? 'READY' : totalScore >= 50 ? 'WARN' : 'ERROR',
+      status: totalScore >= 75 ? 'READY' : totalScore >= 50 ? 'WARN' : 'FAILED',
       details: [
         { message: totalScore > 0 ? 'Structured data active.' : 'No rich schema found.', explanation: 'Schema (JSON-LD) acts as an API for AI engines to parse entities.', remediation: 'Add Organization, FAQPage, or Article schema.' }
       ]

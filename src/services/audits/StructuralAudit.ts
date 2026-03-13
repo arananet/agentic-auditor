@@ -18,7 +18,7 @@ export class StructuralAudit implements IAuditStrategy {
 
     return {
       score: totalScore,
-      status: totalScore >= 70 ? 'READY' : totalScore >= 40 ? 'WARN' : 'ERROR',
+      status: totalScore >= 70 ? 'READY' : totalScore >= 40 ? 'WARN' : 'FAILED',
       details: [
         { message: listCount > 0 || tableCount > 0 ? `Detected ${listCount} lists and ${tableCount} tables.` : 'Content is mostly flat text.', explanation: 'Lists and tables are "AI Magnets"—the highest signal structural elements.', remediation: 'Break up long paragraphs into bulleted lists or summary tables.' },
         { message: semanticTagCount >= 3 ? 'Clean semantic structure.' : 'Vague site structure.', explanation: 'Over-using generic <div> tags prevents AI from parsing the "Main Content" accurately.', remediation: 'Replace generic containers with <main>, <article>, and <section> tags.' }

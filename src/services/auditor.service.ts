@@ -72,7 +72,7 @@ export class AuditorService {
           results.log.push(`[OK] Completed ${strategy.name} audit: ${res.score}/100`);
         } catch (e: any) {
           results.log.push(`[ERROR] ${strategy.name} failed: ${e.message}`);
-          results[strategy.name] = { score: 0, status: 'ERROR', details: [{ message: `Audit failed: ${e.message}`, explanation: 'Internal error', remediation: 'Retry later' }] };
+          results[strategy.name] = { score: 0, status: 'FAILED', details: [{ message: `Audit failed: ${e.message}`, explanation: 'Internal error', remediation: 'Retry later' }] };
         }
       });
 

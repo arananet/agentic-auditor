@@ -22,7 +22,7 @@ export class IntentMatchAudit implements IAuditStrategy {
 
     return {
       score: finalScore,
-      status: finalScore >= 60 ? 'READY' : finalScore > 0 ? 'WARN' : 'ERROR',
+      status: finalScore >= 60 ? 'READY' : finalScore > 0 ? 'WARN' : 'FAILED',
       details: [
         { message: finalScore > 0 ? 'Conversational headings found.' : 'Headings are purely topical.', explanation: 'Generative search matches user queries directly to semantic headings.', remediation: 'Rewrite H2s as common questions (e.g., "What is [Product]?").' }
       ]

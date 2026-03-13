@@ -18,7 +18,7 @@ export class SemanticAudit implements IAuditStrategy {
 
     return {
       score: totalScore,
-      status: totalScore >= 75 ? 'READY' : totalScore >= 40 ? 'WARN' : 'ERROR',
+      status: totalScore >= 75 ? 'READY' : totalScore >= 40 ? 'WARN' : 'FAILED',
       details: [
         { message: lengthScore >= 40 ? 'Adequate semantic length.' : 'Content length too short.', explanation: 'LLMs require dense context windows to properly index an entity.', remediation: 'Ensure core landing pages exceed 300 words.' },
         { message: `Lexical Diversity Score: ${lexicalDiversity}/50`, explanation: 'High vocabulary diversity signals expert-level content rather than keyword stuffing.', remediation: 'Use synonyms and LSI (Latent Semantic Indexing) keywords natively.' }

@@ -27,7 +27,7 @@ export class TechnicalAudit implements IAuditStrategy {
 
     return {
       score: totalScore,
-      status: totalScore >= 75 ? 'READY' : totalScore >= 50 ? 'WARN' : 'ERROR',
+      status: totalScore >= 75 ? 'READY' : totalScore >= 50 ? 'WARN' : 'FAILED',
       details: [
         { message: isCSR ? 'Client-Side Rendering Detected.' : 'Server-Side Rendering Detected.', explanation: 'CSR blocks AI scrapers that do not execute JavaScript.', remediation: 'Implement SSR or Static Generation.' },
         { message: robotsScore > 0 ? 'AI explicit allows found.' : 'Missing explicit AI allows in robots.txt.', explanation: 'AI agents require explicit permission to crawl and summarize your content.', remediation: 'Update robots.txt to allow GPTBot, ClaudeBot, and PerplexityBot.' }

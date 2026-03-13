@@ -27,7 +27,7 @@ export class MediaAudit implements IAuditStrategy {
 
     return {
       score: totalScore,
-      status: totalScore >= 80 ? 'READY' : totalScore >= 40 ? 'WARN' : 'ERROR',
+      status: totalScore >= 80 ? 'READY' : totalScore >= 40 ? 'WARN' : 'FAILED',
       details: [
         { message: totalImages > 0 ? `${descriptiveAltCount}/${totalImages} images have descriptive alt text.` : 'No images found on the page.', explanation: 'Vision-Language Models (VLMs) and multi-modal AI rely heavily on descriptive alt text to "see" images.', remediation: 'Add 4+ word descriptive alt attributes to all content images.' }
       ]
