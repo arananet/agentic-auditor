@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { AuditorService } from '@/services/auditor.service';
-
-const auditor = new AuditorService();
+import { globalQueue } from '@/services/QueueManager';
 
 export async function POST(req: Request) {
   try {
@@ -29,8 +27,27 @@ export async function POST(req: Request) {
       }, { status: 403 });
     }
     
-    const results = await auditor.runAudit(url);
-    return NextResponse.json(results);
+    // Add job to memory queue instead of awaiting it synchronously
+    const jobId = globalQueue.addJob(url);
+    const status = globalQueue.getJobStatus(jobId);
+
+    return NextResponse.json({ jobId, ...status });
+  } catch (error) {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const jobId = searchParams.get('jobId');
+    
+    if (!jobId) return NextResponse.json({ error: 'Missing jobId' }, { status: 400 });
+
+    const status = globalQueue.getJobStatus(jobId);
+    if (!status) return NextResponse.json({ error: 'Job not found or expired' }, { status: 404 });
+
+    return NextResponse.json(status);
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

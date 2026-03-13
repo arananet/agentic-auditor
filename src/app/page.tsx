@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bot, Zap, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuditForm } from "@/components/AuditForm";
@@ -12,23 +12,84 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<AuditResponse | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
+  const [queueInfo, setQueueInfo] = useState<{ position: number, status: string } | null>(null);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
 
   const handleAudit = async (token: string) => {
     if (!url) return;
     setLoading(true);
     setResults(null);
-    setLogs(["[INIT] Handshaking with target domain...", "[SCAN] Probing GEO spectrum levels..."]);
+    setQueueInfo(null);
+    setLogs(["[INIT] Handshaking with server queue..."]);
     try {
       const res = await fetch("/api/audit", { method: "POST", body: JSON.stringify({ url, token }) });
       const data = await res.json();
-      setResults(data);
-      setLogs(prev => [...prev, ...data.log]);
-    } catch (e) {
-      setLogs(prev => [...prev, "[ERROR] Connection failure."]);
-    } finally {
+      
+      if (data.error) throw new Error(data.error);
+      
+      setActiveJobId(data.jobId);
+      setQueueInfo({ position: data.position, status: data.status });
+      setLogs(prev => [...prev, `[QUEUE] Ticket assigned: ${data.jobId}`, `[QUEUE] Position: ${data.position}`]);
+    } catch (e: any) {
+      setLogs(prev => [...prev, `[ERROR] Connection failure: ${e.message}`]);
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!activeJobId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/audit?jobId=${activeJobId}`);
+        const data = await res.json();
+        
+        if (data.error) {
+           setLogs(prev => [...prev, `[ERROR] Queue ticket expired or invalid.`]);
+           setActiveJobId(null);
+           setLoading(false);
+           clearInterval(interval);
+           return;
+        }
+
+        setQueueInfo({ position: data.position, status: data.status });
+        
+        if (data.status === 'completed') {
+           setResults(data.result);
+           setLogs(prev => [...prev, ...data.result.log]);
+           setActiveJobId(null);
+           setLoading(false);
+           clearInterval(interval);
+        } else if (data.status === 'failed') {
+           setLogs(prev => [...prev, `[FATAL] Scan failed: ${data.error}`]);
+           setActiveJobId(null);
+           setLoading(false);
+           clearInterval(interval);
+        } else if (data.status === 'processing') {
+           // To avoid spamming logs every 3 seconds while processing
+           setLogs(prev => {
+             const last = prev[prev.length - 1];
+             if (!last.includes("Probing GEO spectrum levels")) {
+                return [...prev, "[SCAN] Job active. Probing GEO spectrum levels..."];
+             }
+             return prev;
+           });
+        } else if (data.status === 'queued') {
+           setLogs(prev => {
+             const last = prev[prev.length - 1];
+             if (!last.includes(`Position: ${data.position}`)) {
+                return [...prev, `[QUEUE] Waiting in line... Position: ${data.position}`];
+             }
+             return prev;
+           });
+        }
+      } catch (err) {
+        console.error("Polling error", err);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [activeJobId]);
 
   const printReport = () => {
     window.print();
@@ -118,7 +179,14 @@ export default function Home() {
       {/* Audit Tool Section */}
       <section id="audit-section" className="max-w-[1400px] mx-auto px-6 pb-32">
          <div id="audit-form" className="max-w-3xl mx-auto mb-16">
-            <AuditForm url={url} loading={loading} onUrlChange={setUrl} onAudit={(token) => handleAudit(token)} />
+            <AuditForm 
+              url={url} 
+              loading={loading} 
+              queueStatus={queueInfo?.status}
+              queuePosition={queueInfo?.position}
+              onUrlChange={setUrl} 
+              onAudit={(token) => handleAudit(token)} 
+            />
          </div>
          
          <AnimatePresence>
@@ -254,16 +322,24 @@ export default function Home() {
                  </div>
 
                  {/* Raw Logs */}
+                 
+              </motion.div>
+            )}
+         </AnimatePresence>
+
+         {/* Extracted Raw Logs outside of results wrapper so queue logs show immediately */}
+         {(logs.length > 0 || loading) && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                  <div className="log-container mt-8 border border-white/5 bg-[#0D0D0D] p-6 font-mono text-[11px] h-40 overflow-y-auto text-white/40 tracking-wider no-print">
                     {logs.map((log, i) => (
-                      <p key={i} className={`mb-1 ${log.includes('[ERROR]') ? 'text-red-400/80' : log.includes('[OK]') ? 'text-[#8FBC8F]/80' : ''}`}>
+                      <p key={i} className={`mb-1 ${log.includes('[ERROR]') || log.includes('[FATAL]') ? 'text-red-400/80' : log.includes('[OK]') ? 'text-[#8FBC8F]/80' : log.includes('[QUEUE]') ? 'text-blue-400/80' : ''}`}>
                         {log}
                       </p>
                     ))}
                  </div>
-              </motion.div>
-            )}
-         </AnimatePresence>
+            </motion.div>
+         )}
+
       </section>
 
       {/* Footer */}
