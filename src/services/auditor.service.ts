@@ -79,6 +79,16 @@ export class AuditorService {
           results[strategy.name] = res;
           totalScore += res.score;
           results.log.push(`[OK] Completed ${strategy.name} audit: ${res.score}/100`);
+          
+          if (res.score < 100) {
+            res.details.forEach(detail => {
+              // Extract the LLM Analysis explanation or the heuristic explanation
+              const feedback = detail.explanation.replace('LLM Analysis: ', '');
+              if (feedback) {
+                 results.log.push(`   ↳ [FINDING] ${feedback}`);
+              }
+            });
+          }
         } catch (e: any) {
           results.log.push(`[ERROR] ${strategy.name} failed: ${e.message}`);
           results[strategy.name] = { score: 0, status: 'FAILED', details: [{ message: `Audit failed: ${e.message}`, explanation: 'Internal error', remediation: 'Retry later' }] };
