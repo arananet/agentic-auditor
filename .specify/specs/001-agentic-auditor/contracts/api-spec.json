@@ -1,0 +1,31 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Geo Agentic Auditor API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/audit": {
+      "post": {
+        "summary": "Run GEO Audit",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": { "type": "string" },
+                  "turnstileToken": { "type": "string" }
+                },
+                "required": ["url", "turnstileToken"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Audit Results" }
+        }
+      }
+    }
+  }
+}
