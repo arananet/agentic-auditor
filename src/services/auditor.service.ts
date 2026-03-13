@@ -14,6 +14,7 @@ import { MediaAudit } from './audits/MediaAudit';
 import { SentimentAudit } from './audits/SentimentAudit';
 import { fetchWithTimeout } from './fetchWithTimeout';
 import { globalCache } from './CacheManager';
+import { LlmAnalyzer } from './LlmAnalyzer';
 
 export class AuditorService {
   private strategies: IAuditStrategy[] = [
@@ -46,6 +47,14 @@ export class AuditorService {
       overallScore: 0,
       log: [`[OK] INITIALIZING SCAN FOR ${baseUrl}`]
     };
+
+    if (LlmAnalyzer.isConfigured()) {
+      results.log.push(`[INFO] Deep Semantic Engine Active (Cloudflare Workers AI - Llama 3.1).`);
+      results.log.push(`[INFO] Benefits: Advanced stance analysis, superior intent matching, and nuanced entity recognition.`);
+    } else {
+      results.log.push(`[WARN] Partial Detection Active: No LLM configured.`);
+      results.log.push(`[WARN] Falling back to heuristic density analysis. Add Cloudflare AI credentials to enable deep semantic analysis.`);
+    }
 
     try {
       results.log.push(`[OK] Fetching HTML content...`);
