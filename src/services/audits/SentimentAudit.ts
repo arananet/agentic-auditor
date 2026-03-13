@@ -6,11 +6,11 @@ export class SentimentAudit implements IAuditStrategy {
   name = 'sentiment';
 
   async execute({ $, html }: AuditContext): Promise<AuditResult> {
-    // Advanced continuous sentiment proxy: check for trusted, authoritative language
+    const text = $('body').text().toLowerCase();
+    
+    // 1. Base Heuristic: Fast Lexical Density
     const trustWords = ['guarantee', 'proven', 'expert', 'secure', 'certified', 'trusted', 'reliable', 'award', 'recognized', 'leading'];
     const weakWords = ['maybe', 'perhaps', 'try to', 'might', 'could be', 'hopefully'];
-    
-    const text = $('body').text().toLowerCase();
     
     let trustScore = 0;
     trustWords.forEach(w => {
@@ -24,19 +24,26 @@ export class SentimentAudit implements IAuditStrategy {
       weakPenalty += (text.match(regex) || []).length * 10;
     });
 
-    // Optionally utilize LlmAnalyzer if we had the API keys configured
-    const llmSemanticScore = await LlmAnalyzer.analyzeSemantics(text.slice(0, 2000), "authoritative stance and brand trust");
-
-    // Mix heuristic and ML mock (weighted)
     let finalScore = Math.max(0, Math.min(100, 50 + trustScore - weakPenalty));
-    finalScore = Math.round((finalScore * 0.4) + (llmSemanticScore * 0.6));
+    
+    // 2. Deep Semantic Check: LLM Override (if configured)
+    if (LlmAnalyzer.isConfigured()) {
+      const systemPrompt = `You are evaluating website text for "Brand Sentiment & Authority" under Generative Engine Optimization (GEO) standards.
+Evaluate the text's stance: Does it sound like an undisputed industry leader, or is the language passive, weak, or apologetic? 
+Look for strong trust markers (certifications, guarantees, expertise) versus weak qualifiers (might, maybe, try to). 
+Return 100 for absolute authoritative domain expertise, 50 for average marketing copy, and 0 for extremely passive/untrustworthy language.`;
+      
+      const llmScore = await LlmAnalyzer.analyzeSemantics(text.slice(0, 3000), systemPrompt);
+      // Give the LLM more weight (80%) than the dumb regex (20%)
+      finalScore = Math.round((finalScore * 0.2) + (llmScore * 0.8));
+    }
 
     return {
       score: finalScore,
       status: finalScore >= 70 ? 'READY' : finalScore >= 40 ? 'WARN' : 'FAILED',
       details: [
         { message: trustScore > 0 ? 'High trust markers detected.' : 'Low density of authoritative vocabulary.', explanation: 'AI agents synthesize the "sentiment" or "stance" of your brand based on vocabulary confidence.', remediation: 'Replace passive or uncertain language with definitive, authoritative statements.' },
-        { message: `Semantic Confidence: ${finalScore}%`, explanation: 'A weighted NLP/heuristic analysis of brand authority and clarity.', remediation: 'Highlight awards, certifications, and guarantees.' }
+        { message: `Authority Score: ${finalScore}/100`, explanation: 'A weighted analysis of brand authority and clarity.', remediation: 'Highlight awards, certifications, and guarantees prominently.' }
       ]
     };
   }
