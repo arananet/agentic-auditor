@@ -48,7 +48,7 @@ export class MediaAudit implements IAuditStrategy {
       score: finalScore,
       status: finalScore >= 80 ? 'READY' : finalScore >= 40 ? 'WARN' : 'FAILED',
       details: [
-        { message: totalImages > 0 ? `${descriptiveAltCount}/${totalImages} images have descriptive alt text.` : 'No images found on the page.', explanation: hasLlmMessage ? explanation : 'Vision-Language Models (VLMs) and multi-modal AI rely heavily on descriptive alt text to "see" images.', remediation: hasLlmMessage ? remediation : 'Add 4+ word descriptive alt attributes to all content images.' }
+        { message: totalImages > 0 ? `${descriptiveAltCount}/${totalImages} images have descriptive alt text.` : 'No images found on the page.', explanation: hasLlmMessage ? explanation : 'Vision-Language Models (VLMs) and multi-modal AI rely heavily on descriptive alt text to "see" images.', remediation: hasLlmMessage ? remediation : 'Add 4+ word descriptive alt attributes to all content images.', source: { label: 'WCAG 2.1 – SC 1.1.1 Non-text Content', url: 'https://www.w3.org/WAI/WCAG21/Understanding/non-text-content.html' }, location: `<img> elements (${totalImages} total, ${imagesWithAlt} with alt text)` }
       ]
     };
   }

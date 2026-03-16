@@ -6,7 +6,6 @@ export interface AuditContext {
   baseUrl: string;
   html: string;
   $: cheerio.CheerioAPI;
-  headers: Headers;
 }
 
 export interface IAuditStrategy {

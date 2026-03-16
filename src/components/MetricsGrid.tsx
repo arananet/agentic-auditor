@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useRef } from 'react';
 import { AuditResult } from "@/types";
 import { motion } from "framer-motion";
 
@@ -5,7 +8,22 @@ interface Props {
   metrics: { id: string; label: string; data: AuditResult; description: string }[];
 }
 
-export const MetricsGrid = ({ metrics }: Props) => (
+type TooltipKey = `${number}-${number}`;
+
+export const MetricsGrid = ({ metrics }: Props) => {
+  const [activeTooltip, setActiveTooltip] = useState<TooltipKey | null>(null);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showTooltip = (key: TooltipKey) => {
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    setActiveTooltip(key);
+  };
+
+  const scheduleHide = () => {
+    hideTimerRef.current = setTimeout(() => setActiveTooltip(null), 350);
+  };
+
+  return (
   <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 no-print">
     {metrics.map((m, i) => (
       <motion.div 
@@ -52,20 +70,49 @@ export const MetricsGrid = ({ metrics }: Props) => (
             <div className="pt-5 border-t border-white/10 group-hover:border-white/20 transition-colors">
               <div className="text-[9px] text-white/40 group-hover:text-white/70 transition-colors uppercase tracking-widest mb-4">Findings</div>
               <ul className="space-y-3">
-                {m.data.details.slice(0, 2).map((detail, idx) => (
-                  <li key={idx} className="relative group/tooltip text-xs text-white/60 group-hover:text-white/90 transition-colors leading-relaxed flex items-start gap-3 cursor-help">
-                    <span className="text-[#D4A373] mt-0.5">-</span> 
-                    <span className="border-b border-dashed border-white/20 pb-0.5">{detail.message}</span>
-                    
-                    <div className="absolute bottom-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-[320px] bg-[#111111] border border-[#D4A373]/40 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.9)] z-[100] text-left opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-300 transform translate-y-2 group-hover/tooltip:translate-y-0 pointer-events-none">
-                       <div className="text-[#D4A373] text-[10px] font-bold mb-2 uppercase tracking-[0.2em] border-b border-[#D4A373]/20 pb-1">Analysis</div>
-                       <div className="text-white/80 text-xs mb-5 leading-relaxed">{detail.explanation}</div>
-                       <div className="text-[#8FBC8F] text-[10px] font-bold mb-2 uppercase tracking-[0.2em] border-b border-[#8FBC8F]/20 pb-1">Remediation</div>
-                       <div className="text-white/80 text-xs leading-relaxed font-mono bg-black/50 p-2 rounded border border-white/5">{detail.remediation}</div>
-                       <div className="absolute -bottom-[6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-[#111111] border-b border-r border-[#D4A373]/40 transform rotate-45"></div>
-                    </div>
-                  </li>
-                ))}
+                {m.data.details.slice(0, 2).map((detail, idx) => {
+                  const tooltipKey: TooltipKey = `${i}-${idx}`;
+                  const isActive = activeTooltip === tooltipKey;
+                  return (
+                    <li
+                      key={idx}
+                      className="relative text-xs text-white/60 group-hover:text-white/90 transition-colors leading-relaxed flex items-start gap-3 cursor-help"
+                      onMouseEnter={() => showTooltip(tooltipKey)}
+                      onMouseLeave={scheduleHide}
+                    >
+                      <span className="text-[#D4A373] mt-0.5">-</span> 
+                      <span className="border-b border-dashed border-white/20 pb-0.5">{detail.message}</span>
+                      
+                      <div
+                        className={`absolute bottom-[calc(100%+4px)] left-1/2 -translate-x-1/2 w-[320px] bg-[#111111] border border-[#D4A373]/40 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.9)] z-[100] text-left transition-all duration-300 ${isActive ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible translate-y-2 pointer-events-none'}`}
+                        onMouseEnter={() => showTooltip(tooltipKey)}
+                        onMouseLeave={scheduleHide}
+                      >
+                         {detail.location && (
+                           <div className="flex items-center gap-1.5 mb-3 px-2 py-1 bg-white/5 rounded font-mono">
+                             <span className="text-white/25 text-[9px] shrink-0">⚆</span>
+                             <span className="text-white/40 text-[9px] truncate">{detail.location}</span>
+                           </div>
+                         )}
+                         <div className="text-[#D4A373] text-[10px] font-bold mb-2 uppercase tracking-[0.2em] border-b border-[#D4A373]/20 pb-1">Analysis</div>
+                         <div className="text-white/80 text-xs mb-5 leading-relaxed">{detail.explanation}</div>
+                         <div className="text-[#8FBC8F] text-[10px] font-bold mb-2 uppercase tracking-[0.2em] border-b border-[#8FBC8F]/20 pb-1">Remediation</div>
+                         <div className="text-white/80 text-xs leading-relaxed font-mono bg-black/50 p-2 rounded border border-white/5">{detail.remediation}</div>
+                         {detail.source && (
+                           <div className="mt-4 pt-4 border-t border-white/10">
+                             <div className="text-[#7BA7BC] text-[10px] font-bold mb-1 uppercase tracking-[0.2em]">Source</div>
+                             {detail.source.url ? (
+                               <a href={detail.source.url} target="_blank" rel="noopener noreferrer" className="text-[#7BA7BC]/80 text-[10px] leading-relaxed hover:text-[#7BA7BC] underline underline-offset-2">{detail.source.label}</a>
+                             ) : (
+                               <span className="text-[#7BA7BC]/80 text-[10px] leading-relaxed">{detail.source.label}</span>
+                             )}
+                           </div>
+                         )}
+                         <div className="absolute -bottom-[6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-[#111111] border-b border-r border-[#D4A373]/40 transform rotate-45"></div>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
@@ -73,4 +120,5 @@ export const MetricsGrid = ({ metrics }: Props) => (
       </motion.div>
     ))}
   </section>
-);
+  );
+};

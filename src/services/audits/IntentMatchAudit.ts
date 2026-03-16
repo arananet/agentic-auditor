@@ -45,7 +45,7 @@ Evaluate the array of headings based strictly on their conversational and proble
       score: finalScore,
       status: finalScore >= 60 ? 'READY' : finalScore > 0 ? 'WARN' : 'FAILED',
       details: [
-        { message: finalScore > 50 ? 'Conversational headings found.' : 'Headings are purely topical.', explanation: hasLlmMessage ? explanation : 'Generative search relies on headings matching user search queries directly.', remediation: hasLlmMessage ? remediation : 'Rewrite H2s as common queries.' }
+        { message: finalScore > 50 ? 'Conversational headings found.' : 'Headings are purely topical.', explanation: hasLlmMessage ? explanation : 'Generative search relies on headings matching user search queries directly.', remediation: hasLlmMessage ? remediation : 'Rewrite H2s as common queries.', source: { label: 'GEO: Generative Engine Optimization (Aggarwal et al., 2023)', url: 'https://arxiv.org/abs/2311.09735' }, location: `<h1>/<h2>/<h3> (${headings.length} heading${headings.length !== 1 ? 's' : ''})` }
       ]
     };
   }

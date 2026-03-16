@@ -8,7 +8,11 @@ export interface Job {
   result?: AuditResponse;
   error?: string;
   createdAt: number;
+  /** Live log lines streamed as each audit step completes */
+  log: string[];
 }
+
+const MAX_QUEUE_SIZE = 50;
 
 class QueueManager {
   private jobs: Map<string, Job> = new Map();
@@ -17,12 +21,23 @@ class QueueManager {
   private auditor = new AuditorService();
 
   addJob(url: string): string {
+    // URL deduplication: if the same URL is already queued or processing, return existing job
+    const existing = Array.from(this.jobs.entries()).find(
+      ([, job]) => job.url === url && (job.status === 'queued' || job.status === 'processing')
+    );
+    if (existing) return existing[0];
+
+    if (this.queue.length >= MAX_QUEUE_SIZE) {
+      throw new Error('Queue is full. Please try again later.');
+    }
+
     const id = Math.random().toString(36).substring(2, 15);
     this.jobs.set(id, {
       id,
       url,
       status: 'queued',
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      log: []
     });
     this.queue.push(id);
     this.processQueue();
@@ -50,7 +65,9 @@ class QueueManager {
       job.status = 'processing';
       
       try {
-        const result = await this.auditor.runAudit(job.url);
+        const result = await this.auditor.runAudit(job.url, (msg) => {
+          job.log.push(msg);
+        });
         job.status = 'completed';
         job.result = result;
       } catch (error: any) {

@@ -11,5 +11,8 @@ The Geo Agentic Auditor ensures digital content is strictly optimized for Genera
 
 ## Technical Mandates
 - **TypeScript Strict Mode:** Mandatory.
-- **Error Handling:** Graceful degradation on malformed HTML or network failures.
-- **Performance:** Asynchronous execution with caching (e.g., Cloudflare KV or LRU).
+- **Error Handling:** Graceful degradation on malformed HTML or network failures. LLM quota exhaustion must fall back to heuristics silently.
+- **Performance:** Asynchronous execution with caching (LRU, 200-entry cap). Playwright browser singleton shared across requests.
+- **Rendering:** Playwright headless Chromium for page rendering. `fetchTextFile()` (native fetch) for plain-text resources only.
+- **Security:** Cloudflare Turnstile required on all audit submissions. SSRF protection on URL inputs. Per-IP rate limiting (10 req/min) on the API route.
+- **LLM:** Cloudflare Workers AI (`@cf/meta/llama-3.1-8b-instruct`) exclusively. Free Tier = 10,000 neurons/day — always degrade gracefully.

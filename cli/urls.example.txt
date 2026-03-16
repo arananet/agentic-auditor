@@ -1,0 +1,10 @@
+# geo-audit batch input file
+# One URL per line. Lines starting with # are ignored.
+#
+# Usage:
+#   npm run audit:batch -- --urls-file cli/urls.example.txt --output ./reports --format both
+#   npx tsx cli/index.ts --urls-file cli/urls.example.txt --output ./reports --format both
+
+https://www.example.com
+# https://www.wikipedia.org
+# https://www.github.com

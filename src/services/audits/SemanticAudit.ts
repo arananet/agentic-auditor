@@ -9,9 +9,13 @@ export class SemanticAudit implements IAuditStrategy {
     const textLength = $('body').text().trim().replace(/\s+/g, ' ').length;
     const hasSufficientLength = textLength > 1500;
     
-    const words = $('body').text().toLowerCase().split(/\W+/);
-    const uniqueWords = new Set(words);
-    const lexicalDiversity = Math.min(50, Math.floor((uniqueWords.size / words.length) * 100));
+    const allWords = $('body').text().toLowerCase().split(/\W+/).filter(w => w.length > 0);
+    // Use a sample window (first 500 words) to avoid Heaps' law penalizing long content
+    const sampleWords = allWords.slice(0, 500);
+    const uniqueWords = new Set(sampleWords);
+    const lexicalDiversity = sampleWords.length > 0
+      ? Math.min(50, Math.floor((uniqueWords.size / sampleWords.length) * 100))
+      : 0;
     
     const lengthScore = hasSufficientLength ? 50 : Math.floor((textLength / 1500) * 50);
     let totalScore = lengthScore + lexicalDiversity;
@@ -35,8 +39,8 @@ export class SemanticAudit implements IAuditStrategy {
       score: finalScore,
       status: finalScore >= 75 ? 'READY' : finalScore >= 40 ? 'WARN' : 'FAILED',
       details: [
-        { message: lengthScore >= 40 ? 'Adequate semantic length.' : 'Content length too short.', explanation: hasLlmMessage ? explanation : 'LLMs require dense context windows to properly index an entity.', remediation: hasLlmMessage ? remediation : 'Ensure core landing pages exceed 300 words.' },
-        { message: `Lexical Diversity Score: ${lexicalDiversity}/50`, explanation: hasLlmMessage ? explanation : 'High vocabulary diversity signals expert-level content rather than keyword stuffing.', remediation: hasLlmMessage ? remediation : 'Use synonyms and LSI (Latent Semantic Indexing) keywords natively.' }
+        { message: lengthScore >= 40 ? 'Adequate semantic length.' : 'Content length too short.', explanation: hasLlmMessage ? explanation : 'LLMs require dense context windows to properly index an entity.', remediation: hasLlmMessage ? remediation : 'Ensure core landing pages exceed 300 words.', source: { label: 'GEO: Generative Engine Optimization (Aggarwal et al., 2023)', url: 'https://arxiv.org/abs/2311.09735' }, location: `document.body (${textLength} chars)` },
+        { message: `Lexical Diversity Score: ${lexicalDiversity}/50`, explanation: hasLlmMessage ? explanation : 'High vocabulary diversity signals expert-level content rather than keyword stuffing.', remediation: hasLlmMessage ? remediation : 'Use synonyms and LSI (Latent Semantic Indexing) keywords natively.', source: { label: 'GEO: Generative Engine Optimization (Aggarwal et al., 2023)', url: 'https://arxiv.org/abs/2311.09735' }, location: 'document.body — first 500-word sample' }
       ]
     };
   }

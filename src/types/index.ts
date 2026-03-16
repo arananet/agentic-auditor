@@ -1,7 +1,15 @@
+export interface AuditSource {
+  label: string;
+  url?: string;
+}
+
 export interface AuditFinding {
   message: string;
   explanation: string;
   remediation: string;
+  source?: AuditSource;
+  /** DOM element, file path, or page section where the issue was detected */
+  location?: string;
 }
 
 export interface AuditResult {

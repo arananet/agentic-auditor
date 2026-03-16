@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Bot, Zap, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuditForm } from "@/components/AuditForm";
@@ -14,12 +14,17 @@ export default function Home() {
   const [logs, setLogs] = useState<string[]>([]);
   const [queueInfo, setQueueInfo] = useState<{ position: number, status: string } | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  // useRef (not useState) to track consumed log lines — avoids React StrictMode
+  // double-invoking the updater and appending the same lines twice.
+  const knownLogCountRef = useRef(0);
+  const logEndRef = useRef<HTMLDivElement>(null);
 
   const handleAudit = async (token: string) => {
     if (!url) return;
     setLoading(true);
     setResults(null);
     setQueueInfo(null);
+    knownLogCountRef.current = 0;
     setLogs(["[INIT] Handshaking with server queue..."]);
     try {
       const res = await fetch("/api/audit", { method: "POST", body: JSON.stringify({ url, token }) });
@@ -35,6 +40,11 @@ export default function Home() {
       setLoading(false);
     }
   };
+
+  // Auto-scroll the log panel as new lines arrive
+  useEffect(() => {
+    logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [logs]);
 
   useEffect(() => {
     if (!activeJobId) return;
@@ -53,10 +63,21 @@ export default function Home() {
         }
 
         setQueueInfo({ position: data.position, status: data.status });
+
+        // Stream any new live log lines the server has accumulated since last poll
+        const liveLogs: string[] = data.log ?? [];
+        const newLines = liveLogs.slice(knownLogCountRef.current);
+        if (newLines.length > 0) {
+          knownLogCountRef.current = liveLogs.length;
+          setLogs(existing => [...existing, ...newLines]);
+        }
         
         if (data.status === 'completed') {
            setResults(data.result);
-           setLogs(prev => [...prev, ...data.result.log]);
+           // If live log was empty (cache hit), fall back to result log
+           if (liveLogs.length === 0 && data.result?.log?.length) {
+             setLogs(prev => [...prev, ...data.result.log]);
+           }
            setActiveJobId(null);
            setLoading(false);
            clearInterval(interval);
@@ -65,15 +86,6 @@ export default function Home() {
            setActiveJobId(null);
            setLoading(false);
            clearInterval(interval);
-        } else if (data.status === 'processing') {
-           // To avoid spamming logs every 3 seconds while processing
-           setLogs(prev => {
-             const last = prev[prev.length - 1];
-             if (!last.includes("Probing GEO spectrum levels")) {
-                return [...prev, "[SCAN] Job active. Probing GEO spectrum levels..."];
-             }
-             return prev;
-           });
         } else if (data.status === 'queued') {
            setLogs(prev => {
              const last = prev[prev.length - 1];
@@ -92,7 +104,12 @@ export default function Home() {
   }, [activeJobId]);
 
   const printReport = () => {
+    const site = url.replace(/^https?:\/\//, '').replace(/[\/\\?#:*"<>|]+/g, '_').replace(/_+$/, '');
+    const ts = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
+    const prev = document.title;
+    document.title = `GEO_Audit_${site}_${ts}`;
     window.print();
+    document.title = prev;
   };
 
   const metricsData = results ? [
@@ -170,10 +187,20 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="max-w-2xl mx-auto text-white/50 text-sm md:text-base leading-relaxed mb-16 tracking-wide"
+          className="max-w-2xl mx-auto text-white/50 text-sm md:text-base leading-relaxed mb-10 tracking-wide"
         >
           Evaluate your domain against 11 specifications from the Geo Agentic Auditor framework. Detect gaps in AI visibility and download a Technical Remediation Report for your team.
         </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[#1A1A0A] border border-[#D4A373]/20 text-[10px] uppercase tracking-[0.2em] mb-16"
+        >
+          <span className="text-[#D4A373]/60">⚡</span>
+          <span className="text-white/40">Powered by Cloudflare Workers AI{" "}<span className="text-[#D4A373]/60">Free Tier</span>{" — limited to "}<span className="text-[#D4A373]/60">10,000 neurons / day</span></span>
+        </motion.div>
       </section>
 
       {/* Audit Tool Section */}
@@ -330,12 +357,20 @@ export default function Home() {
          {/* Extracted Raw Logs outside of results wrapper so queue logs show immediately */}
          {(logs.length > 0 || loading) && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                 <div className="log-container mt-8 border border-white/5 bg-[#0D0D0D] p-6 font-mono text-[11px] h-40 overflow-y-auto text-white/40 tracking-wider no-print">
+                 <div className="log-container mt-8 border border-white/5 bg-[#0D0D0D] p-6 font-mono text-[11px] h-56 overflow-y-auto text-white/40 tracking-wider no-print">
                     {logs.map((log, i) => (
-                      <p key={i} className={`mb-1 ${log.includes('[ERROR]') || log.includes('[FATAL]') ? 'text-red-400/80' : log.includes('[OK]') ? 'text-[#8FBC8F]/80' : log.includes('[QUEUE]') ? 'text-blue-400/80' : ''}`}>
+                      <p key={i} className={`mb-1 ${
+                        log.includes('[ERROR]') || log.includes('[FATAL]') || log.includes('[FAIL]') ? 'text-red-400/80' :
+                        log.includes('[OK]') ? 'text-[#8FBC8F]/80' :
+                        log.includes('[WARN]') ? 'text-[#D4A373]/80' :
+                        log.includes('[QUEUE]') ? 'text-blue-400/80' :
+                        log.includes('[SCAN]') ? 'text-white/25 italic' :
+                        ''
+                      }`}>
                         {log}
                       </p>
                     ))}
+                    <div ref={logEndRef} />
                  </div>
             </motion.div>
          )}

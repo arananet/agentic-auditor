@@ -4,6 +4,32 @@ export interface LlmResult {
   remediation: string;
 }
 
+// ---------------------------------------------------------------------------
+// Rate limiter: max 60 requests per minute (1 per second minimum gap)
+// A global queue serialises all LLM calls so bursts from concurrent audits
+// never exceed the Cloudflare AI endpoint limit.
+// ---------------------------------------------------------------------------
+const RATE_LIMIT_RPM = 60;
+const MIN_INTERVAL_MS = Math.ceil(60_000 / RATE_LIMIT_RPM); // 1000 ms
+
+let lastCallAt = 0;
+let rateLimitQueue = Promise.resolve();
+
+function scheduleCall<T>(fn: () => Promise<T>): Promise<T> {
+  rateLimitQueue = rateLimitQueue.then(async () => {
+    const now = Date.now();
+    const wait = MIN_INTERVAL_MS - (now - lastCallAt);
+    if (wait > 0) await new Promise(r => setTimeout(r, wait));
+    lastCallAt = Date.now();
+  });
+
+  // We chain the actual work after the rate-limit delay, but return its result
+  // independently so callers get their own promise.
+  return new Promise<T>((resolve, reject) => {
+    rateLimitQueue = rateLimitQueue.then(() => fn().then(resolve, reject).then(() => {}));
+  });
+}
+
 // Intelligent semantic analysis using Cloudflare Workers AI
 export class LlmAnalyzer {
   static isConfigured(): boolean {
@@ -18,6 +44,10 @@ export class LlmAnalyzer {
   static async analyzeWithFeedback(text: string, systemPrompt: string): Promise<LlmResult | null> {
     if (!this.isConfigured()) return null;
 
+    return scheduleCall(() => this._doFetch(text, systemPrompt));
+  }
+
+  private static async _doFetch(text: string, systemPrompt: string): Promise<LlmResult | null> {
     const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
     const apiToken = process.env.CLOUDFLARE_API_TOKEN;
     const endpoint = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/meta/llama-3.1-8b-instruct`;
@@ -50,7 +80,7 @@ export class LlmAnalyzer {
 
       const result = await response.json();
       let llmOutput = result?.result?.response?.trim() || "";
-      
+
       // Clean potential markdown blocks
       if (llmOutput.startsWith('```json')) {
         llmOutput = llmOutput.replace(/^```json/, '').replace(/```$/, '').trim();
@@ -59,7 +89,7 @@ export class LlmAnalyzer {
       }
 
       const parsed = JSON.parse(llmOutput);
-      
+
       return {
         score: typeof parsed.score === 'number' ? Math.max(0, Math.min(100, parsed.score)) : 50,
         explanation: parsed.explanation || 'Analyzed via Deep Semantic Engine.',

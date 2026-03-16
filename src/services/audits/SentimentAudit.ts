@@ -24,7 +24,7 @@ export class SentimentAudit implements IAuditStrategy {
       weakPenalty += (text.match(regex) || []).length * 10;
     });
 
-    let finalScore = Math.max(0, Math.min(100, 50 + trustScore - weakPenalty));
+    let finalScore = Math.max(0, Math.min(100, trustScore - weakPenalty));
     let explanation = 'A weighted analysis of brand authority and clarity.';
     let remediation = 'Highlight awards, certifications, and guarantees prominently.';
     let hasLlmMessage = false;
@@ -49,8 +49,8 @@ Score 100 for absolute authoritative domain expertise, 50 for average marketing 
       score: finalScore,
       status: finalScore >= 70 ? 'READY' : finalScore >= 40 ? 'WARN' : 'FAILED',
       details: [
-        { message: trustScore > 0 ? 'High trust markers detected.' : 'Low density of authoritative vocabulary.', explanation: 'AI agents synthesize the "sentiment" or "stance" of your brand based on vocabulary confidence.', remediation: 'Replace passive or uncertain language with definitive, authoritative statements.' },
-        { message: hasLlmMessage ? `Authority Score: ${finalScore}/100 (Deep Semantic)` : `Authority Score: ${finalScore}/100 (Heuristic)`, explanation, remediation }
+        { message: trustScore > 0 ? 'High trust markers detected.' : 'Low density of authoritative vocabulary.', explanation: 'AI agents synthesise the "sentiment" or "stance" of your brand based on vocabulary confidence.', remediation: 'Replace passive or uncertain language with definitive, authoritative statements.', source: { label: 'Google E-E-A-T – Trust & Authoritativeness', url: 'https://developers.google.com/search/docs/fundamentals/creating-helpful-content' }, location: 'document.body — vocabulary density analysis' },
+        { message: hasLlmMessage ? `Authority Score: ${finalScore}/100 (Deep Semantic)` : `Authority Score: ${finalScore}/100 (Heuristic)`, explanation, remediation, source: { label: 'Google E-E-A-T – Trust & Authoritativeness', url: 'https://developers.google.com/search/docs/fundamentals/creating-helpful-content' }, location: 'document.body — tone & stance analysis' }
       ]
     };
   }
