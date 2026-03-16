@@ -44,7 +44,7 @@ export default function Home() {
         const res = await fetch(`/api/audit?jobId=${activeJobId}`);
         const data = await res.json();
         
-        if (data.error) {
+        if (data.error && !data.status) {
            setLogs(prev => [...prev, `[ERROR] Queue ticket expired or invalid.`]);
            setActiveJobId(null);
            setLoading(false);

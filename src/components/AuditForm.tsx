@@ -1,5 +1,5 @@
-import { Globe, ArrowRight, Loader2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Globe, ArrowRight, Loader2, RefreshCw } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 interface Props {
   url: string;
@@ -21,38 +21,45 @@ export const AuditForm = ({ url, loading, queueStatus, queuePosition, onUrlChang
   const widgetId = useRef<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Load Turnstile Script
-    const script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-    script.async = true;
-    script.defer = true;
-    document.body.appendChild(script);
-
-    script.onload = () => {
-      if (window.turnstile && turnstileRef.current) {
-        widgetId.current = window.turnstile.render(turnstileRef.current, {
-          sitekey: "0x4AAAAAACo07B70a2WlqXNQ",
-          theme: "dark",
-          callback: (receivedToken: string) => {
-            setToken(receivedToken);
-          },
-          'expired-callback': () => {
-            setToken(null);
-          },
-          'error-callback': () => {
-            setToken(null);
-          },
-        });
+  const initTurnstile = useCallback(() => {
+    if (window.turnstile && turnstileRef.current) {
+      if (widgetId.current !== null) {
+        window.turnstile.remove(widgetId.current);
+        widgetId.current = null;
       }
-    };
-
-    return () => {
-      if (script.parentNode) {
-        document.body.removeChild(script);
-      }
-    };
+      widgetId.current = window.turnstile.render(turnstileRef.current, {
+        sitekey: "0x4AAAAAACo07B70a2WlqXNQ",
+        theme: "dark",
+        callback: (receivedToken: string) => {
+          setToken(receivedToken);
+        },
+        'expired-callback': () => {
+          setToken(null);
+        },
+        'error-callback': () => {
+          setToken(null);
+        },
+      });
+    }
   }, []);
+
+  useEffect(() => {
+    if (!window.turnstile) {
+      const script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+      script.onload = initTurnstile;
+      return () => {
+        if (script.parentNode) {
+          document.body.removeChild(script);
+        }
+      };
+    } else {
+      initTurnstile();
+    }
+  }, [initTurnstile]);
 
   const handleSubmit = () => {
     if (!token) {
@@ -60,6 +67,11 @@ export const AuditForm = ({ url, loading, queueStatus, queuePosition, onUrlChang
       return;
     }
     onAudit(token);
+  };
+
+  const handleResetToken = () => {
+    setToken(null);
+    initTurnstile();
   };
 
   return (
@@ -92,7 +104,6 @@ export const AuditForm = ({ url, loading, queueStatus, queuePosition, onUrlChang
           )}
         </button>
         
-        {/* Progress Bar under button when loading */}
         {loading && (
            <div className="absolute bottom-0 left-0 h-1 bg-[#D4A373]/20 w-full overflow-hidden">
              <div className="h-full bg-[#D4A373] w-1/3 animate-[slide_2s_ease-in-out_infinite]"></div>
@@ -100,8 +111,17 @@ export const AuditForm = ({ url, loading, queueStatus, queuePosition, onUrlChang
         )}
       </div>
       
-      <div className="flex justify-center md:justify-start min-h-[65px]">
+      <div className="flex flex-col md:flex-row items-center justify-between min-h-[65px] gap-4">
         <div ref={turnstileRef}></div>
+        {token && !loading && (
+          <button 
+            onClick={handleResetToken}
+            className="flex items-center gap-2 text-xs text-white/40 hover:text-white/80 transition-colors uppercase tracking-widest px-4"
+            title="Refresh Security Token for a new scan"
+          >
+            <RefreshCw size={14} /> Reset Token
+          </button>
+        )}
       </div>
 
       <style jsx>{`
