@@ -189,7 +189,7 @@ export default function Home() {
           transition={{ delay: 0.2 }}
           className="max-w-2xl mx-auto text-white/50 text-sm md:text-base leading-relaxed mb-10 tracking-wide"
         >
-          Evaluate your domain against 11 specifications from the Geo Agentic Auditor framework. Detect gaps in AI visibility and download a Technical Remediation Report for your team.
+          Elevate your website against 11 GEO/SEO specifications. Detect gaps that could affect AI visibility and download a technical remediation report for your technical agency.
         </motion.p>
 
         <motion.div
