@@ -5,7 +5,7 @@ import { LlmAnalyzer } from '../LlmAnalyzer';
 export class MediaAudit implements IAuditStrategy {
   name = 'media';
 
-  async execute({ $ }: AuditContext): Promise<AuditResult> {
+  async execute({ $, language }: AuditContext): Promise<AuditResult> {
     const images = $('img');
     const totalImages = images.length;
     let imagesWithAlt = 0;
@@ -34,7 +34,10 @@ export class MediaAudit implements IAuditStrategy {
     let hasLlmMessage = false;
 
     if (LlmAnalyzer.isConfigured()) {
-      const systemPrompt = `Evaluate the image alt-text strategy for Vision-Language Models (VLMs). Total images: ${totalImages}. Images with alt text: ${imagesWithAlt}. Images with highly descriptive alt text (>3 words): ${descriptiveAltCount}. Score 100 if all images have robust descriptive alt text summarizing the image contents contextually. Penalize if alt text is missing or too short. Provide feedback on the specific alt text quality.`;
+      const systemPrompt = `Evaluate the image alt-text strategy for Vision-Language Models (VLMs).
+The page is in "${language}". Alt text may be in ${language} — do not penalize for non-English alt text.
+Total images: ${totalImages}. Images with alt text: ${imagesWithAlt}. Images with highly descriptive alt text (>3 words): ${descriptiveAltCount}.
+Score 100 if all images have robust descriptive alt text summarizing the image contents contextually in any language. Penalize if alt text is missing or too short.`;
       const llmResult = await LlmAnalyzer.analyzeWithFeedback(altTexts.join('\n').slice(0, 3000) || "No images on page.", systemPrompt);
       if (llmResult) {
         finalScore = Math.round((finalScore * 0.2) + (llmResult.score * 0.8));

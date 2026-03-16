@@ -5,7 +5,7 @@ import { LlmAnalyzer } from '../LlmAnalyzer';
 export class StructuralAudit implements IAuditStrategy {
   name = 'structural';
 
-  async execute({ $ }: AuditContext): Promise<AuditResult> {
+  async execute({ $, html, language }: AuditContext): Promise<AuditResult> {
     const listCount = $('ul, ol').length;
     const tableCount = $('table').length;
     const semanticTagCount = $('article, section, nav, aside, main, header, footer').length;
@@ -24,8 +24,18 @@ export class StructuralAudit implements IAuditStrategy {
     let hasLlmMessage = false;
 
     if (LlmAnalyzer.isConfigured()) {
-      const structureContext = `Lists (ul/ol): ${listCount}. Tables: ${tableCount}. Semantic HTML5 tags (main, article, section, nav, aside, header, footer): ${semanticTagCount}. Definition lists (dl): ${definitionListCount}. Details/Summary (collapsible): ${detailsSummaryCount}. DOM depth sample: ${$('body > *').length} direct children.`;
-      const systemPrompt = `Evaluate the structural readiness of a webpage for AI parsing under GEO 2026. AI engines extract data most effectively from lists, tables, definition lists, and semantic HTML5 containers. Score 100 if there are ample structured elements. Score 0 if the page is mostly flat unstructured text inside divs. Give specific feedback on how to improve DOM structure for AI consumption.`;
+      // Send a real HTML sample (first 4KB of body) so the LLM can see actual DOM structure
+      const bodySample = $('body').html()?.slice(0, 4000) || '';
+      const structureContext = `Page language: ${language}.
+Heuristic counts: Lists (ul/ol): ${listCount}. Tables: ${tableCount}. Semantic HTML5 tags (main, article, section, nav, aside, header, footer): ${semanticTagCount}. Definition lists (dl): ${definitionListCount}. Details/Summary (collapsible): ${detailsSummaryCount}. DOM direct children: ${$('body > *').length}.
+HTML sample (first 4KB of <body>):
+${bodySample}`;
+      const systemPrompt = `Evaluate the structural readiness of a webpage for AI parsing under GEO 2026.
+The page is in "${language}". Evaluate the actual HTML structure — do not penalize for language.
+AI engines extract data most effectively from lists, tables, definition lists, and semantic HTML5 containers (<main>, <article>, <section>).
+You receive both numeric counts and an actual HTML sample. Use the HTML to verify the real DOM structure — some pages use CSS/JS to render lists visually but use <div> chains underneath.
+Score 100 if there are ample real semantic elements. Score 0 if the page is mostly flat <div>-soup with no semantic structure.
+Provide specific remediation advice.`;
       const llmResult = await LlmAnalyzer.analyzeWithFeedback(structureContext, systemPrompt);
       if (llmResult) {
         finalScore = Math.round((finalScore * 0.2) + (llmResult.score * 0.8));

@@ -5,38 +5,90 @@ import { LlmAnalyzer } from '../LlmAnalyzer';
 export class BrandMentionsAudit implements IAuditStrategy {
   name = 'brandMentions';
 
-  async execute({ $ }: AuditContext): Promise<AuditResult> {
+  /** Language-keyed URL/text patterns for about, trust, and contact pages. */
+  private static readonly ABOUT_PATTERNS: Record<string, string[]> = {
+    en: ['about', 'who-we-are', 'our-story', 'company', 'sustainability'],
+    pt: ['sobre', 'quem-somos', 'nossa-historia', 'institucional', 'empresa', 'sustentabilidade'],
+    es: ['sobre', 'quienes-somos', 'nuestra-historia', 'empresa', 'sostenibilidad'],
+    fr: ['a-propos', 'qui-sommes', 'notre-histoire', 'entreprise', 'durabilite'],
+    de: ['ueber-uns', 'uber-uns', 'unternehmen', 'nachhaltigkeit'],
+    it: ['chi-siamo', 'la-nostra-storia', 'azienda', 'sostenibilita'],
+  };
+  private static readonly TRUST_PATTERNS: Record<string, string[]> = {
+    en: ['privacy', 'terms', 'policy', 'faq', 'testimonial', 'press', 'awards', 'certificat'],
+    pt: ['privacidade', 'termos', 'condicoes', 'politica', 'faq', 'frete', 'certificad'],
+    es: ['privacidad', 'terminos', 'condiciones', 'politica', 'faq', 'certificad'],
+    fr: ['confidentialite', 'conditions', 'mentions-legales', 'faq', 'certificat'],
+    de: ['datenschutz', 'agb', 'impressum', 'nutzungsbedingungen', 'faq'],
+    it: ['privacy', 'termini', 'condizioni', 'faq', 'certificaz'],
+  };
+  private static readonly CONTACT_PATTERNS: Record<string, string[]> = {
+    en: ['contact', 'support', 'help'],
+    pt: ['contato', 'atendimento', 'suporte', 'ajuda'],
+    es: ['contacto', 'atencion', 'soporte', 'ayuda'],
+    fr: ['contact', 'assistance', 'aide'],
+    de: ['kontakt', 'hilfe', 'support'],
+    it: ['contatto', 'supporto', 'assistenza', 'aiuto'],
+  };
+
+  async execute({ $, language }: AuditContext): Promise<AuditResult> {
     // 1. Authority outbound links — broad set of platforms (2026 GEO)
     const authorityDomains = [
       'linkedin.com', 'twitter.com', 'x.com', 'wikipedia.org',
-      'facebook.com', 'instagram.com', 'youtube.com', 'tiktok.com',
-      'reddit.com', 'github.com', 'glassdoor.com', 'crunchbase.com'
+      'facebook.com', 'fb.com', 'fb.me',
+      'instagram.com', 'youtube.com', 'tiktok.com',
+      'reddit.com', 'github.com', 'glassdoor.com', 'crunchbase.com',
+      'wa.me', 'whatsapp.com', 't.me'
     ];
     const authoritySelector = authorityDomains.map(d => `a[href*="${d}"]`).join(', ');
     const authorityLinks = $(authoritySelector).length;
 
-    // 2. Social icon links in footer/header (common pattern)
-    const socialIconLinks = $('[class*="social"] a, footer a[aria-label], [class*="footer"] a[href*="linkedin"], [class*="footer"] a[href*="instagram"], [class*="footer"] a[href*="facebook"], [class*="footer"] a[href*="youtube"], [class*="footer"] a[href*="x.com"], [class*="footer"] a[href*="twitter"]').length;
+    // 2. Social icon links — look in footer, header, or any social/share wrapper
+    const socialIconLinks = $(
+      '[class*="social"] a[href], [class*="share"] a[href], ' +
+      'footer a[href], [class*="footer"] a[href], [id*="footer"] a[href], ' +
+      '[role="contentinfo"] a[href]'
+    ).filter((_, el) => {
+      const href = ($(el).attr('href') || '').toLowerCase();
+      return authorityDomains.some(d => href.includes(d));
+    }).length;
 
-    const totalSocialProof = authorityLinks + socialIconLinks;
+    const totalSocialProof = Math.max(authorityLinks, authorityLinks + socialIconLinks);
     const socialScore = Math.min(40, totalSocialProof * 8);
 
-    // 3. About page detection — broader selectors
-    const hasAboutUs = $(
-      'a[href*="about"], a[href*="sobre"], a[href*="quem-somos"], a[href*="who-we-are"], ' +
-      'a:contains("About"), a:contains("Sobre"), a:contains("Quem Somos"), a:contains("Who We Are")'
-    ).length > 0 ? 30 : 0;
+    // 3. About page detection — language-aware
+    const aboutWords = [
+      ...(BrandMentionsAudit.ABOUT_PATTERNS[language] || []),
+      ...(language !== 'en' ? BrandMentionsAudit.ABOUT_PATTERNS['en'] : [])
+    ];
+    const aboutSelector = aboutWords.map(w => `a[href*="${w}"]`).join(', ');
+    const hasAboutUs = $(aboutSelector).length > 0 ? 30 : 0;
 
-    // 4. Trust markers: testimonials, press, privacy, certifications
-    const hasTrustPage = $(
-      'a[href*="privacy"], a[href*="terms"], a[href*="testimonial"], a[href*="press"], ' +
-      'a[href*="awards"], a[href*="certificat"], a:contains("Testimonials"), a:contains("Press")'
-    ).length > 0 ? 15 : 0;
+    // 4. Trust markers — language-aware
+    const trustWords = [
+      ...(BrandMentionsAudit.TRUST_PATTERNS[language] || []),
+      ...(language !== 'en' ? BrandMentionsAudit.TRUST_PATTERNS['en'] : [])
+    ];
+    const trustSelector = trustWords.map(w => `a[href*="${w}"]`).join(', ');
+    const hasTrustPage = $(trustSelector).length > 0 ? 15 : 0;
 
-    // 5. Contact info presence
-    const hasContact = $(
-      'a[href^="mailto:"], a[href^="tel:"], a[href*="contact"], a:contains("Contact")'
-    ).length > 0 ? 15 : 0;
+    // 5. Contact info presence — language-aware + WhatsApp + phone patterns
+    const contactWords = [
+      ...(BrandMentionsAudit.CONTACT_PATTERNS[language] || []),
+      ...(language !== 'en' ? BrandMentionsAudit.CONTACT_PATTERNS['en'] : [])
+    ];
+    const contactHrefSelector = [
+      'a[href^="mailto:"]', 'a[href^="tel:"]',
+      'a[href*="wa.me"]', 'a[href*="whatsapp"]', 'a[href*="api.whatsapp.com"]',
+      ...contactWords.map(w => `a[href*="${w}"]`)
+    ].join(', ');
+    const hasContactLink = $(contactHrefSelector).length > 0;
+
+    // Detect phone numbers in page text (international formats)
+    const bodyText = $.text();
+    const hasPhonePattern = /(\+?\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}/.test(bodyText) ||
+      /0800[\s.-]?\d{3}[\s.-]?\d{4}/.test(bodyText);
+    const hasContact = (hasContactLink || hasPhonePattern) ? 15 : 0;
 
     let finalScore = Math.min(100, socialScore + hasAboutUs + hasTrustPage + hasContact);
     let explanation = 'AI engines cross-reference brand entities via Wikipedia, social profiles, and trust signals.';
@@ -44,11 +96,15 @@ export class BrandMentionsAudit implements IAuditStrategy {
     let hasLlmMessage = false;
 
     if (LlmAnalyzer.isConfigured()) {
-      // Send actual page link summary so the LLM can evaluate real brand authority signals
       const allLinks = $('a[href]').map((_, el) => $(el).attr('href')).get().filter(Boolean).slice(0, 100);
-      const pageContext = `Authority links found: ${totalSocialProof}. Social icon links: ${socialIconLinks}. About page: ${hasAboutUs > 0}. Trust pages (privacy/terms/press): ${hasTrustPage > 0}. Contact info: ${hasContact > 0}. Sample outbound links: ${JSON.stringify(allLinks.slice(0, 30))}`;
+      const pageContext = `Page language: ${language}. Authority links found: ${totalSocialProof}. Social icon links: ${socialIconLinks}. About page: ${hasAboutUs > 0}. Trust pages (privacy/terms/press): ${hasTrustPage > 0}. Contact info: ${hasContact > 0}. Sample outbound links: ${JSON.stringify(allLinks.slice(0, 30))}`;
 
-      const systemPrompt = `Evaluate the site's brand authority and social proof for GEO (Generative Engine Optimization) 2026 standards. Brand mentions on YouTube and Reddit correlate ~3x more strongly with AI visibility than traditional backlinks (Ahrefs, Dec 2025, 75K brands). AI agents cross-reference brand entities via Wikipedia, social media profiles (YouTube, Reddit, LinkedIn), and company data aggregators (Crunchbase, Glassdoor, GitHub). Score 100 if the site has strong outbound authority links including YouTube/Reddit, a clear About page, contact info, and trust markers. Score 0 if none exist.`;
+      const systemPrompt = `Evaluate the site's brand authority and social proof for GEO (Generative Engine Optimization) 2026 standards.
+The page is in "${language}". Evaluate the site IN ITS ORIGINAL LANGUAGE — do not penalize for non-English link text or page names.
+Brand mentions on YouTube and Reddit correlate ~3x more strongly with AI visibility than traditional backlinks (Ahrefs, Dec 2025, 75K brands).
+AI agents cross-reference brand entities via Wikipedia, social media profiles (YouTube, Reddit, LinkedIn), and company data aggregators (Crunchbase, Glassdoor, GitHub).
+Score 100 if the site has strong outbound authority links including YouTube/Reddit, a clear About page (may be called "Sobre", "Quem Somos", "Chi Siamo", etc.), contact info (phone, WhatsApp, email), and trust markers (privacy policy, terms, FAQ).
+Score 0 if none exist.`;
       const llmResult = await LlmAnalyzer.analyzeWithFeedback(pageContext, systemPrompt);
       if (llmResult) {
         finalScore = Math.round((finalScore * 0.2) + (llmResult.score * 0.8));

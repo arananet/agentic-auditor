@@ -5,7 +5,7 @@ import { LlmAnalyzer } from '../LlmAnalyzer';
 export class SemanticAudit implements IAuditStrategy {
   name = 'semantic';
 
-  async execute({ $ }: AuditContext): Promise<AuditResult> {
+  async execute({ $, language }: AuditContext): Promise<AuditResult> {
     const textLength = $('body').text().trim().replace(/\s+/g, ' ').length;
     const hasSufficientLength = textLength > 1500;
     
@@ -25,7 +25,10 @@ export class SemanticAudit implements IAuditStrategy {
     let hasLlmMessage = false;
 
     if (LlmAnalyzer.isConfigured()) {
-      const systemPrompt = `Evaluate the semantic depth and lexical diversity of the following text snippet. High scores (80-100) require expert-level vocabulary, deep context, and substantial topic coverage. Low scores (0-40) are given to repetitive, thin, generic, or keyword-stuffed text. Provide feedback on the semantic richness. Lexical Diversity Ratio: ${lexicalDiversity}%.`;
+      const systemPrompt = `Evaluate the semantic depth and lexical diversity of the following text snippet.
+The page is in "${language}". Evaluate the content IN ITS ORIGINAL LANGUAGE — do not penalize for not being in English.
+High scores (80-100) require expert-level vocabulary, deep context, and substantial topic coverage in ${language}.
+Low scores (0-40) are given to repetitive, thin, generic, or keyword-stuffed text. Provide feedback on the semantic richness. Lexical Diversity Ratio: ${lexicalDiversity}%.`;
       const llmResult = await LlmAnalyzer.analyzeWithFeedback($('body').text().replace(/\s+/g, ' ').slice(0, 3000), systemPrompt);
       if (llmResult) {
         finalScore = Math.round((finalScore * 0.2) + (llmResult.score * 0.8));

@@ -5,15 +5,18 @@ import { LlmAnalyzer } from '../LlmAnalyzer';
 export class ContentQualityAudit implements IAuditStrategy {
   name = 'contentQuality';
 
-  async execute({ $ }: AuditContext): Promise<AuditResult> {
-    const hasAuthorMeta = $('meta[name="author"]').length > 0 || $('.author, .byline').length > 0;
-    const hasPublishDate = $('time').length > 0 || $('meta[property="article:published_time"]').length > 0;
+  async execute({ $, language }: AuditContext): Promise<AuditResult> {
+    const hasAuthorMeta = $('meta[name="author"]').length > 0 || $('.author, .byline, [rel="author"], [itemprop="author"]').length > 0;
+    const hasPublishDate = $('time').length > 0
+      || $('meta[property="article:published_time"]').length > 0
+      || $('meta[itemprop="datePublished"]').length > 0
+      || $('[class*="date"], [class*="publish"]').filter((_, el) => /\d{4}/.test($(el).text())).length > 0;
     
     // Extract text from main content area only, excluding nav/footer/header/aside boilerplate
-    const contentSelector = 'main, article, [role="main"]';
+    const contentSelector = 'main, article, [role="main"], #content, .content, .main-content';
     const contentEl = $(contentSelector);
     const rawText = (contentEl.length > 0 ? contentEl : $('body')).clone()
-      .find('nav, footer, header, aside, [role="navigation"], [role="banner"], [role="contentinfo"]').remove().end()
+      .find('nav, footer, header, aside, script, style, noscript, [role="navigation"], [role="banner"], [role="contentinfo"]').remove().end()
       .text();
     const wordCount = rawText.split(/\s+/).filter(w => w.length > 0).length;
     const wordDensityScore = Math.min(50, Math.floor(wordCount / 50)); 
@@ -28,7 +31,11 @@ export class ContentQualityAudit implements IAuditStrategy {
     let hasLlmMessage = false;
 
     if (LlmAnalyzer.isConfigured()) {
-      const systemPrompt = `Evaluate the following text for E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness) Content Quality. Word count: ${wordCount}, Has author meta: ${hasAuthorMeta}, Has publish date: ${hasPublishDate}. High scores require clear indications of authorship, freshness, and deep substantive content. Penalize thin, generic content. Provide direct feedback on the content quality.`;
+      const systemPrompt = `Evaluate the following text for E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness) Content Quality.
+The page is in "${language}". Evaluate the content IN ITS ORIGINAL LANGUAGE — do not penalize for not being in English.
+Word count: ${wordCount}. Has author meta: ${hasAuthorMeta}. Has publish date: ${hasPublishDate}.
+High scores require clear indications of authorship, freshness, and deep substantive content.
+Penalize thin, generic content. Provide feedback and remediation suggestions in English, but acknowledge the page language.`;
       const text = rawText.trim().replace(/\s+/g, ' ');
       const llmResult = await LlmAnalyzer.analyzeWithFeedback(text.slice(0, 3000), systemPrompt);
       if (llmResult) {

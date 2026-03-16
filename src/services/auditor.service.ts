@@ -12,7 +12,7 @@ import { StructuralAudit } from './audits/StructuralAudit';
 import { SemanticAudit } from './audits/SemanticAudit';
 import { MediaAudit } from './audits/MediaAudit';
 import { SentimentAudit } from './audits/SentimentAudit';
-import { fetchWithTimeout } from './fetchWithTimeout';
+import { fetchWithTimeout, isBotBlockPage } from './fetchWithTimeout';
 import { globalCache } from './CacheManager';
 import { LlmAnalyzer } from './LlmAnalyzer';
 
@@ -72,13 +72,25 @@ export class AuditorService {
       emit(`[OK] Fetching HTML content from ${url}...`);
       const html = await fetchWithTimeout(url, 30000);
       emit(`[OK] HTML fetched (${(html.length / 1024).toFixed(1)} KB). Starting ${this.strategies.length} parallel audits...`);
+
+      // Warn if we received a WAF challenge page instead of real content
+      if (isBotBlockPage(html)) {
+        emit(`[WARN] ⚠ Bot protection detected (Imperva/Cloudflare/WAF). The site may have returned a challenge page instead of real content.`);
+        emit(`[WARN] ⚠ Audit results below may be inaccurate — scores will reflect the block page, not the actual site.`);
+      }
+
       const $ = cheerio.load(html);
+
+      // Detect page language from <html lang>, <meta> Content-Language, or content heuristics
+      const language = this.detectLanguage($, html);
+      emit(`[INFO] Detected page language: ${language}. Note: geo-redirected sites may serve a different locale depending on the server's IP location.`);
 
       const context: AuditContext = {
         url,
         baseUrl,
         html,
-        $
+        $,
+        language
       };
 
       let totalScore = 0;
@@ -120,5 +132,48 @@ export class AuditorService {
       emit(`[FATAL] Scan failed: ${error.message || 'Unknown network error'}`);
       throw new Error(`Audit failed: ${error.message}`);
     }
+  }
+
+  /**
+   * Detect page language from <html lang>, <meta http-equiv="Content-Language">,
+   * og:locale, or a simple content-frequency heuristic. Returns ISO 639-1 code.
+   */
+  private detectLanguage($: cheerio.CheerioAPI, html: string): string {
+    // 1. Regex on raw HTML — most reliable, avoids Cheerio stripping <html> attributes
+    const rawLangMatch = html.match(/<html[^>]*\blang\s*=\s*["']([^"']+)["']/i);
+    if (rawLangMatch) return rawLangMatch[1].trim().toLowerCase().split('-')[0];
+
+    // 2. Cheerio fallback: $('html').attr('lang') or first [lang] element
+    const htmlLang = ($('html').attr('lang') || $('[lang]').first().attr('lang') || '').trim().toLowerCase();
+    if (htmlLang) return htmlLang.split('-')[0];
+
+    // 3. <meta http-equiv="Content-Language" content="pt-BR">
+    const metaLang = ($('meta[http-equiv="Content-Language"]').attr('content') || '').trim().toLowerCase();
+    if (metaLang) return metaLang.split('-')[0];
+
+    // 4. <meta property="og:locale" content="pt_BR">
+    const ogLocale = ($('meta[property="og:locale"]').attr('content') || '').trim().toLowerCase();
+    if (ogLocale) return ogLocale.split('_')[0];
+
+    // 5. <meta name="language" content="pt">
+    const metaLang2 = ($('meta[name="language"]').attr('content') || '').trim().toLowerCase();
+    if (metaLang2) return metaLang2.split('-')[0];
+
+    // 6. Content heuristic — language-exclusive stop-words (avoid shared words like "para", "entre")
+    const text = $('body').text().toLowerCase().slice(0, 5000);
+    const langPatterns: [string, RegExp][] = [
+      ['pt', /\b(você|não|também|são|nosso|mais|muito|ainda|desde|já|pode|está|fazer|depois)\b/g],
+      ['es', /\b(también|más|nuestro|puede|está|hacer|después|donde|pero|ahora|muy|otro|tiene)\b/g],
+      ['fr', /\b(vous|nous|avec|dans|pour|aussi|depuis|cette|mais|sont|peut|fait|après|très)\b/g],
+      ['de', /\b(nicht|auch|sich|eine|haben|werden|diese|können|nach|über|noch|schon|sehr)\b/g],
+      ['it', /\b(anche|sono|questa|nostro|tutti|dopo|può|ancora|molto|però|come|hanno|fatto)\b/g],
+    ];
+    let bestLang = 'en';
+    let bestCount = 0;
+    for (const [lang, pattern] of langPatterns) {
+      const count = (text.match(pattern) || []).length;
+      if (count > bestCount) { bestCount = count; bestLang = lang; }
+    }
+    return bestCount >= 5 ? bestLang : 'en';
   }
 }

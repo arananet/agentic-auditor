@@ -10,7 +10,17 @@ function wordCount(text: string): number {
 export class CitabilityAudit implements IAuditStrategy {
   name = 'citability';
 
-  async execute({ $ }: AuditContext): Promise<AuditResult> {
+  /** Language-keyed answer-block indicator phrases. */
+  private static readonly ANSWER_INDICATORS: Record<string, string[]> = {
+    en: ['is defined as', 'refers to', 'means', 'is a', 'are a', 'represents', 'consists of', 'is known as'],
+    pt: ['é definido como', 'refere-se a', 'significa', 'é um', 'é uma', 'são', 'representa', 'consiste em', 'conhecido como'],
+    es: ['se define como', 'se refiere a', 'significa', 'es un', 'es una', 'son', 'representa', 'consiste en', 'conocido como'],
+    fr: ['est défini comme', 'fait référence à', 'signifie', 'est un', 'est une', 'sont', 'représente', 'consiste en', 'connu comme'],
+    de: ['wird definiert als', 'bezieht sich auf', 'bedeutet', 'ist ein', 'ist eine', 'sind', 'stellt', 'besteht aus', 'bekannt als'],
+    it: ['è definito come', 'si riferisce a', 'significa', 'è un', 'è una', 'sono', 'rappresenta', 'consiste in', 'noto come'],
+  };
+
+  async execute({ $, language }: AuditContext): Promise<AuditResult> {
     const paragraphs = $('p').map((_, el) => $(el).text().trim()).get().filter(p => p.length > 30);
     
     let answerBlockScore = 0;
@@ -21,7 +31,10 @@ export class CitabilityAudit implements IAuditStrategy {
     let tooShortCount = 0;
     let tooLongCount = 0;
 
-    const answerBlockIndicators = ['is defined as', 'refers to', 'means', 'is a', 'are a', 'represents'];
+    const answerBlockIndicators = [
+      ...(CitabilityAudit.ANSWER_INDICATORS[language] || []),
+      ...(language !== 'en' ? CitabilityAudit.ANSWER_INDICATORS['en'] : [])
+    ];
     const statIndicators = [/\b\d+(\.\d+)?\s*(%|percent)\b/i, /\b(increased|decreased)\b.*\b\d+\b/i, /\b\d+(k|m|b)\b/i];
 
     paragraphs.forEach(p => {
@@ -62,7 +75,11 @@ export class CitabilityAudit implements IAuditStrategy {
     let hasLlmMessage = false;
 
     if (LlmAnalyzer.isConfigured()) {
-      const systemPrompt = `Evaluate the following text for "AI Citability" (GEO 2026 standards). High scores (80-100) require: dense "X is Y" definitions, hard statistical metrics, passages of 134-167 words that are self-contained and answer-first, and original data. Low scores (0-40) are for fluffy, vague marketing copy lacking facts or oversized wall-of-text paragraphs AI cannot extract. Research: adding statistics boosts citation by +40%, adding authority quotes by +115% (Princeton/Georgia Tech/IIT Delhi, GEO paper KDD 2024). Provide specific feedback.`;
+      const systemPrompt = `Evaluate the following text for "AI Citability" (GEO 2026 standards).
+The page is in "${language}". Evaluate the content IN ITS ORIGINAL LANGUAGE — do not penalize for not being in English.
+High scores (80-100) require: dense definition patterns ("X is Y" or the ${language} equivalent), hard statistical metrics, passages of 134-167 words that are self-contained and answer-first, and original data.
+Low scores (0-40) are for fluffy, vague marketing copy lacking facts or oversized wall-of-text paragraphs AI cannot extract.
+Research: adding statistics boosts citation by +40%, adding authority quotes by +115% (Princeton/Georgia Tech/IIT Delhi, GEO paper KDD 2024). Provide specific feedback.`;
       const llmResult = await LlmAnalyzer.analyzeWithFeedback(paragraphs.join('\n').slice(0, 3000), systemPrompt);
       if (llmResult) {
         finalScore = Math.round((finalScore * 0.2) + (llmResult.score * 0.8));
