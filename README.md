@@ -71,17 +71,19 @@ npm run audit:cli -- --url https://www.example.com --format pdf
 
 ## 11 GEO Metrics Evaluated
 
-1.  **AI Citability**: Measures density of "Answer Blocks" (X is Y), statistical evidence, and optimal passage length (134–167 words).
-2.  **Technical Readiness**: Evaluates robots.txt with a proper RFC 9309 block parser; checks 16 known AI crawler tokens.
-3.  **Schema Depth**: Detects 14 priority schema types (JSON-LD + microdata) with recursive extraction.
-4.  **A2A Handshakes**: Validates `/llms.txt`, `/llms-full.txt`, and `/.well-known/agent.json`.
-5.  **Brand Authority**: Analyses outbound link authority across 12 domains (Wikipedia, LinkedIn, Reddit, GitHub, etc.) + trust markers.
-6.  **Content E-E-A-T**: Checks for explicit authorship, freshness, and word count within `<main>/<article>` only.
-7.  **Intent Match**: Evaluates if headings use conversational interrogatives matching user prompts.
-8.  **Structural GEO**: Counts lists, tables, definition lists (`<dl>`), `<details>/<summary>`, and semantic HTML5 tags.
-9.  **Semantic Depth**: Lexical diversity measured on a 500-word window (Heaps'-law-safe).
-10. **Media Context**: WCAG 2.1-sourced ratio of descriptive (4+ word) alt-tags for Vision-Language Models.
-11. **Tone Alignment**: Trust-marker-based sentiment heuristic; upgraded to LLM stance analysis when Cloudflare AI is configured.
+| # | Metric | What it checks |
+|---|---|---|
+| 1 | **AI Citability** | Answer-block density (X is Y), statistical claims, and passage-length scoring (optimal window: 134–167 words per GEO paper / Bortolato 2025) |
+| 2 | **Technical Readiness** | SSR vs CSR detection; `robots.txt` per-block parsing for 16 verified AI crawlers; canonical URL; hreflang locale tags; XML Sitemap reachability |
+| 3 | **Schema Depth** | JSON-LD `@graph` traversal; 15 priority schema types (incl. `SpeakableSpecification`) + microdata; required-property quality validation |
+| 4 | **A2A Handshakes** | `llms.txt`, `llms-full.txt`, `.well-known/agent.json` presence and quality |
+| 5 | **Brand Authority** | Outbound authority links across 12 platforms incl. Reddit and YouTube (brand mentions correlate 3x stronger with AI visibility than backlinks — Ahrefs Dec 2025, 75K brands); About/Contact/Trust pages |
+| 6 | **Content E-E-A-T** | Authorship metadata, publish dates, main content word count; meta description quality; Open Graph tags (`og:title`/`og:description`/`og:image`/`og:type`); `<time datetime>` ISO 8601 validation |
+| 7 | **Intent Match** | Conversational interrogative headings matching user query patterns |
+| 8 | **Structural GEO** | Lists, tables, definition lists, semantic HTML5 tags, `<details>`/`<summary>`; table header semantics (`<thead>`, `<th>`, `scope`) |
+| 9 | **Semantic Depth** | Lexical diversity (500-word sample window); content length vs 1,500-word threshold |
+| 10 | **Media Context** | Descriptive alt-text ratio for Vision-Language Models; `<figure>`/`<figcaption>` semantic image context |
+| 11 | **Tone Alignment** | Authoritative vocabulary density vs weak qualifiers |
 
 > Geo Metrics based on the https://github.com/zubair-trabzada/geo-seo-claude framework.
 
@@ -107,12 +109,16 @@ Every finding in the auditor references its backing standard. The table below li
 | [Meta — Web Crawlers documentation](https://developers.facebook.com/docs/sharing/webmasters/web-crawlers) | `meta-externalagent` (AI training), `meta-webindexer` (Meta AI search), `meta-externalfetcher`, `facebookexternalhit` |
 | [Google Search Central — JavaScript SEO basics](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics) | CSR vs SSR crawlability impact |
 | [Google Search Central — Robots meta tag](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag) | `noindex`/`nofollow` meta tag handling |
+| [Google Search Central – Canonical URLs](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls) | Canonical URL for authoritative page resolution |
+| [Google Search Central – Hreflang](https://developers.google.com/search/docs/specialty/international/localized-versions) | Hreflang locale tags for multilingual AI indexing |
+| [Sitemaps.org Protocol](https://www.sitemaps.org/protocol.html) | XML Sitemap for AI crawler content discovery |
 
 ### Schema Depth
 | Source | Purpose |
 |---|---|
 | [Google Search Central — Structured data overview](https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data) | JSON-LD implementation and Rich Result eligibility |
 | [Schema.org](https://schema.org) | Vocabulary definitions for Organization, FAQPage, Article, Product, BreadcrumbList, etc. |
+| [Google – Speakable structured data](https://developers.google.com/search/docs/appearance/structured-data/speakable) | `SpeakableSpecification` for voice-assistant and AI Overview citation |
 
 ### A2A Handshakes
 | Source | Purpose |
@@ -131,6 +137,9 @@ Every finding in the auditor references its backing standard. The table below li
 |---|---|
 | [Google E-E-A-T — Expertise & Authoritativeness](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) | Authorship metadata, freshness dating, content depth |
 | [Google Search Quality Rater Guidelines](https://static.googleusercontent.com/media/guidelines.raterhub.com/en//searchqualityevaluatorguidelines.pdf) | Thin content thresholds (< 1,000 words) |
+| [Google Search Central – Meta descriptions](https://developers.google.com/search/docs/appearance/snippet#meta-descriptions) | Meta description quality for summary and snippet generation |
+| [Open Graph Protocol](https://ogp.me/) | og:title, og:description, og:image, og:type for entity resolution |
+| [HTML Living Standard – time element](https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-time-element) | `<time datetime>` ISO 8601 for machine-readable freshness signals |
 
 ### Intent Match
 | Source | Purpose |
@@ -142,6 +151,7 @@ Every finding in the auditor references its backing standard. The table below li
 |---|---|
 | [Aggarwal et al. (2023) — GEO paper, KDD 2024](https://arxiv.org/abs/2311.09735) | Lists and tables as "AI Magnets" — highest-signal structural elements |
 | [W3C HTML Living Standard — Content Sectioning](https://html.spec.whatwg.org/multipage/sections.html) | `<main>`, `<article>`, `<section>`, `<nav>`, `<aside>` semantics |
+| [W3C – Table headers](https://www.w3.org/WAI/tutorials/tables/) | `<thead>`, `<th scope>` for AI-parseable tabular data |
 
 ### Semantic Depth
 | Source | Purpose |
@@ -152,6 +162,7 @@ Every finding in the auditor references its backing standard. The table below li
 | Source | Purpose |
 |---|---|
 | [WCAG 2.1 — SC 1.1.1 Non-text Content](https://www.w3.org/WAI/WCAG21/Understanding/non-text-content.html) | Descriptive alt-text requirements; critical for Vision-Language Model image understanding |
+| [HTML Living Standard – figure element](https://html.spec.whatwg.org/multipage/grouping-content.html#the-figure-element) | `<figure>`/`<figcaption>` for machine-readable contextual image captions |
 
 ### Tone Alignment
 | Source | Purpose |
