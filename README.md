@@ -1,6 +1,6 @@
 # Geo Agentic Auditor
 
-Geo Agentic Auditor is a deterministic, heuristics-based, and LLM-accelerated Generative Engine Optimization (GEO) scanner. It evaluates a website's readiness for next-generation AI agents, LLMs, and RAG pipelines using 11 dedicated metrics.
+Geo Agentic Auditor is a deterministic, heuristics-based, and LLM-accelerated Generative Engine Optimization (GEO) scanner. It evaluates a website's readiness for next-generation AI agents, LLMs, and RAG pipelines using **11 dedicated metrics** across three effort tiers: Quick Win, Editorial, and Development.
 
 ## Features
 
@@ -9,9 +9,10 @@ Geo Agentic Auditor is a deterministic, heuristics-based, and LLM-accelerated Ge
 - **LLM Acceleration (Optional)**: Automatically upgrades from density heuristics to deep semantic NLP classification when configured with Cloudflare Workers AI (**Free Tier: 10,000 neurons/day**).
 - **Live Log Streaming**: Per-strategy progress lines streamed to the browser console panel in real time.
 - **Turnstile Protected**: Robust edge-level bot protection ensures the audit tool cannot be abused.
-- **Print-to-PDF**: Browser-native technical report with stamped filename (`GEO_Audit_<host>_<ts>`).
+- **Print-to-PDF**: Browser-native technical report organised by effort category, stamped filename (`GEO_Audit_<host>_<ts>`).
 - **CLI Batch Auditor**: `npm run audit:cli` — audit one URL or a batch file, output `.md` + `.pdf` reports.
-- **SOLID Architecture**: Strategy Design Pattern, 11 `IAuditStrategy` implementations.
+- **Categorized Results UI**: Findings grouped into three effort tiers — **Quick Win** (agent access), **Editorial** (content signals), **Development** (structural gaps) — with animated header cards.
+- **SOLID Architecture**: Strategy Design Pattern, `IAuditStrategy` implementations.
 
 ## Architecture
 
@@ -71,19 +72,19 @@ npm run audit:cli -- --url https://www.example.com --format pdf
 
 ## 11 GEO Metrics Evaluated
 
-| # | Metric | What it checks |
-|---|---|---|
-| 1 | **AI Citability** | Answer-block density (X is Y), statistical claims, and passage-length scoring (optimal window: 134–167 words per GEO paper / Bortolato 2025) |
-| 2 | **Technical Readiness** | SSR vs CSR detection; `robots.txt` per-block parsing for 16 verified AI crawlers; canonical URL; hreflang locale tags; XML Sitemap reachability |
-| 3 | **Schema Depth** | JSON-LD `@graph` traversal; 15 priority schema types (incl. `SpeakableSpecification`) + microdata; required-property quality validation |
-| 4 | **A2A Handshakes** | `llms.txt`, `llms-full.txt`, `.well-known/agent.json` presence and quality |
-| 5 | **Brand Authority** | Outbound authority links across 12 platforms incl. Reddit and YouTube (brand mentions correlate 3x stronger with AI visibility than backlinks — Ahrefs Dec 2025, 75K brands); About/Contact/Trust pages |
-| 6 | **Content E-E-A-T** | Authorship metadata, publish dates, main content word count; meta description quality; Open Graph tags (`og:title`/`og:description`/`og:image`/`og:type`); `<time datetime>` ISO 8601 validation |
-| 7 | **Intent Match** | Conversational interrogative headings matching user query patterns |
-| 8 | **Structural GEO** | Lists, tables, definition lists, semantic HTML5 tags, `<details>`/`<summary>`; table header semantics (`<thead>`, `<th>`, `scope`) |
-| 9 | **Semantic Depth** | Lexical diversity (500-word sample window); content length vs 1,500-word threshold |
-| 10 | **Media Context** | Descriptive alt-text ratio for Vision-Language Models; `<figure>`/`<figcaption>` semantic image context |
-| 11 | **Tone Alignment** | Authoritative vocabulary density vs weak qualifiers |
+| # | Metric | What it checks | Effort tier |
+|---|---|---|---|
+| 1 | **AI Citability** | Answer-block density; sourced statistics (+37% GEO lift); named expert quotes (+30%); first-paragraph definition blocks; 40–60 word AEO snippet passages; `evidenceScore` composite | Editorial |
+| 2 | **Technical Readiness** | SSR vs CSR detection; `robots.txt` per-block parsing for 16 verified AI crawlers; canonical URL; hreflang locale tags; XML Sitemap reachability | Quick Win |
+| 3 | **Schema Depth** | JSON-LD `@graph` traversal; 15 priority schema types (incl. `SpeakableSpecification`) + microdata; required-property quality validation | Development |
+| 4 | **A2A Handshakes** | `llms.txt`, `llms-full.txt`, `.well-known/agent.json` presence and quality | Quick Win |
+| 5 | **Brand Authority** | Outbound authority links across 25+ platforms; high-weight domains (Wikipedia, Reddit, YouTube) scored separately; third-party review platforms (G2, Capterra, Trustpilot, Quora, Medium…); About/Contact/Trust pages | Editorial |
+| 6 | **Content E-E-A-T** | Authorship metadata; publish dates; `article:modified_time` freshness recency (excellent ≤30d / good ≤180d / stale); visible "Last updated" text; meta description; Open Graph tags; `<time datetime>` ISO 8601 | Editorial |
+| 7 | **Intent Match** | Conversational interrogative headings matching user query patterns | Editorial |
+| 8 | **Structural GEO** | Lists, tables, semantic HTML5; table header semantics; **FAQ sections** + question-phrased headings (AEO snippet signal); **comparison tables** (~33% of AI citations per ZipTie) | Development |
+| 9 | **Semantic Depth** | Lexical diversity (500-word sample); content length vs 1,500-word threshold; **keyword stuffing detection** (non-stopword >3% density → up to −10pt penalty, Princeton GEO KDD 2024) | Editorial |
+| 10 | **Media Context** | Descriptive alt-text ratio for Vision-Language Models; `<figure>`/`<figcaption>` semantic image context | Editorial |
+| 11 | **Tone Alignment** | Authoritative vocabulary density vs weak qualifiers | Editorial |
 
 > Geo Metrics based on the https://github.com/zubair-trabzada/geo-seo-claude framework.
 
@@ -94,8 +95,10 @@ Every finding in the auditor references its backing standard. The table below li
 ### AI Citability
 | Source | Purpose |
 |---|---|
-| [Aggarwal et al. (2023) — GEO: Generative Engine Optimization, KDD 2024](https://arxiv.org/abs/2311.09735) | Passage-length optimal window (134–167 words), answer-block density, citability formula |
+| [Aggarwal et al. (2023) — GEO: Generative Engine Optimization, KDD 2024](https://arxiv.org/abs/2311.09735) | Passage-length optimal window (134–167 words), answer-block density. Sourced citations +40%, statistics +37%, expert quotes +30%, authoritative tone +25%, keyword stuffing −10% |
 | Bortolato (2025) — AI Overview Passage Length Analysis | Corroborates 134–167 word window for AI Overview citations; oversized passages penalised |
+| [ZipTie (2024) — AI Content-Answer Fit Analysis (400K pages)](https://ziptie.dev/research/ai-content-types) | Content-answer fit 55% of citation likelihood; comparison articles ~33% of AI citations, definitive guides ~15%, original research ~12% |
+| [seoClarity — AEO Content Patterns](https://www.seoclarity.net/blog/answer-engine-optimization) | AEO snippet extraction optimal window: 40–60 words; definition blocks, FAQ sections, and self-contained answer passages as primary extraction targets |
 
 ### Technical Readiness
 | Source | Purpose |
@@ -131,6 +134,8 @@ Every finding in the auditor references its backing standard. The table below li
 |---|---|
 | Ahrefs (Dec 2025) — Brand mentions vs backlinks in AI visibility | 75K-brand study: brand mentions 3× stronger than backlinks for AI citations; YouTube and Reddit carry highest weight |
 | [Google E-E-A-T — Authoritativeness & Trustworthiness](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) | Framework for brand authority signals (About pages, contact info, trust markers) |
+| ChatGPT Citation Distribution Analysis | Wikipedia 7.8%, Reddit 1.8%, Forbes 1.1% of ChatGPT citations; high-weight domains scored separately (+5 pts each, capped at +10) |
+| Third-party review platforms | G2, Capterra, TrustRadius, Trustpilot, Quora, Medium, ProductHunt, Yelp, BBB, SiteJabber — external social proof signals (+3 pts each, capped at +5) |
 
 ### Content E-E-A-T
 | Source | Purpose |
@@ -140,6 +145,7 @@ Every finding in the auditor references its backing standard. The table below li
 | [Google Search Central – Meta descriptions](https://developers.google.com/search/docs/appearance/snippet#meta-descriptions) | Meta description quality for summary and snippet generation |
 | [Open Graph Protocol](https://ogp.me/) | og:title, og:description, og:image, og:type for entity resolution |
 | [HTML Living Standard – time element](https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-time-element) | `<time datetime>` ISO 8601 for machine-readable freshness signals |
+| [SE Ranking (2025) — 129K Domain AI Citation Study](https://seranking.com/blog/ai-overviews-study/) | Content updated within 30 days cited 3.2× more often by ChatGPT; `article:modified_time` + visible "Last updated" text are primary freshness signals |
 
 ### Intent Match
 | Source | Purpose |
@@ -152,11 +158,14 @@ Every finding in the auditor references its backing standard. The table below li
 | [Aggarwal et al. (2023) — GEO paper, KDD 2024](https://arxiv.org/abs/2311.09735) | Lists and tables as "AI Magnets" — highest-signal structural elements |
 | [W3C HTML Living Standard — Content Sectioning](https://html.spec.whatwg.org/multipage/sections.html) | `<main>`, `<article>`, `<section>`, `<nav>`, `<aside>` semantics |
 | [W3C – Table headers](https://www.w3.org/WAI/tutorials/tables/) | `<thead>`, `<th scope>` for AI-parseable tabular data |
+| [seoClarity — AEO FAQ & Question Heading Patterns](https://www.seoclarity.net/blog/answer-engine-optimization) | FAQ sections and natural-language question headings are primary AEO snippet extraction targets; Perplexity and AI Overviews preferentially cite pages with explicit FAQ structure |
+| [ZipTie — Comparison Content AI Citation Analysis](https://ziptie.dev/research/ai-content-types) | Comparison-format tables account for ~33% of AI engine citations; consistent column headers and row structure strongly preferred |
 
 ### Semantic Depth
 | Source | Purpose |
 |---|---|
 | [Aggarwal et al. (2023) — GEO: Generative Engine Optimization](https://arxiv.org/abs/2311.09735) | Semantic density, lexical diversity, and content length thresholds |
+| [Princeton GEO Study — Keyword Stuffing Impact (KDD 2024)](https://arxiv.org/abs/2311.09735) | Non-stopword frequency exceeding 3% signals keyword stuffing; reduces AI engine visibility by ~10%. Automated penalty: up to −10 pts based on number of overused terms |
 
 ### Media Context
 | Source | Purpose |

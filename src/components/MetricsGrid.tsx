@@ -90,7 +90,7 @@ export const MetricsGrid = ({ metrics }: Props) => {
                       >
                          {detail.location && (
                            <div className="flex items-center gap-1.5 mb-3 px-2 py-1 bg-white/5 rounded font-mono">
-                             <span className="text-white/25 text-[9px] shrink-0">⚆</span>
+                             <span className="text-white/25 text-[9px] shrink-0">⦿</span>
                              <span className="text-white/40 text-[9px] truncate">{detail.location}</span>
                            </div>
                          )}

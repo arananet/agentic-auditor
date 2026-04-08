@@ -5,6 +5,7 @@ import { Bot, Zap, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuditForm } from "@/components/AuditForm";
 import { MetricsGrid } from "@/components/MetricsGrid";
+import { CategorizedResults, CATEGORY_DEFS, MetricItem, CategoryGroup } from "@/components/CategorizedResults";
 import { AuditResponse } from "@/types";
 
 export default function Home() {
@@ -112,19 +113,27 @@ export default function Home() {
     document.title = prev;
   };
 
-  const metricsData = results ? [
-    { id: "citability", label: "CITABILITY", data: results.citability, description: "Checks if your content uses simple, direct facts that AI can easily quote." },
+  const metricsData: MetricItem[] = results ? [
+    { id: "citability", label: "CITABILITY", data: results.citability, description: "Checks sourced statistics, expert quotes, definition blocks, and 40-60 word snippet passages for AI citation." },
     { id: "schema", label: "SEMANTIC_SCHEMA", data: results.schema, description: "Validates 'Identity Data' (JSON-LD) to ensure AI knows who your brand is." },
     { id: "technical", label: "TECHNICAL", data: results.technical, description: "Checks if your site code is fast and readable for AI crawlers." },
     { id: "llmstxt", label: "LLMS_TXT_PROTOCOL", data: results.a2a, description: "Verifies your 'AI Handshake' file (llms.txt) for direct agent ingestion." },
-    { id: "brandMentions", label: "BRAND_AUTHORITY", data: results.brandMentions, description: "Analyzes external links to Wikipedia and social media to verify your brand legitimacy." },
-    { id: "contentQuality", label: "CONTENT_EEAT", data: results.contentQuality, description: "Scans for clear author names and recent update dates to build AI trust." },
+    { id: "brandMentions", label: "BRAND_AUTHORITY", data: results.brandMentions, description: "Analyzes external links to Wikipedia, Reddit, YouTube, review platforms, and social media for brand authority." },
+    { id: "contentQuality", label: "CONTENT_EEAT", data: results.contentQuality, description: "Scans for author attribution, publish dates, content freshness recency, and visible 'Last updated' signals." },
     { id: "intentMatch", label: "INTENT_MATCH", data: results.intentMatch, description: "Checks if your headings use questions like 'How' or 'What' to match user prompts." },
-    { id: "structural", label: "STRUCTURAL_GEO", data: results.structural, description: "Analyzes lists, tables, and HTML tags that help AI scan your page." },
-    { id: "semantic", label: "SEMANTIC_DEPTH", data: results.semantic, description: "Measures if you provide enough detailed information for deep AI understanding." },
+    { id: "structural", label: "STRUCTURAL_GEO", data: results.structural, description: "Analyzes lists, tables, FAQ sections, comparison tables, and semantic HTML for AI parsing." },
+    { id: "semantic", label: "SEMANTIC_DEPTH", data: results.semantic, description: "Measures lexical diversity, content depth, and detects keyword stuffing that hurts AI visibility." },
     { id: "media", label: "MEDIA_CONTEXT", data: results.media, description: "Checks if your images have descriptions (alt text) so AI can 'see' them." },
     { id: "sentiment", label: "TONE_ALIGNMENT", data: results.sentiment, description: "Ensures your tone is factual and calm, which AI engines prefer for citations." }
   ] : [];
+
+  // Build categorized groups from flat metrics
+  const metricsMap = new Map(metricsData.map(m => [m.id, m]));
+  const categoryGroups: CategoryGroup[] = results ? CATEGORY_DEFS.map(def => ({
+    ...def,
+    icon: def.icon,
+    metrics: def.metricIds.map(id => metricsMap.get(id)!).filter(Boolean),
+  })) : [];
 
   return (
     <main className="min-h-screen bg-[#0A0A0A] text-[#DCDCDC] font-mono">
@@ -164,14 +173,6 @@ export default function Home() {
 
       {/* Hero Section */}
       <section id="hero" className="max-w-4xl mx-auto px-6 pt-24 pb-24 text-center relative">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="inline-flex items-center gap-2 px-3 py-1 bg-[#1A1A1A] border border-white/5 text-white/40 text-[10px] uppercase tracking-[0.3em] mb-12"
-        >
-          <Zap size={12} className="text-[#D4A373]" />
-          Now supporting 11 GEO Parameters
-        </motion.div>
 
         <motion.h1 
           initial={{ opacity: 0, y: 20 }}
@@ -189,7 +190,7 @@ export default function Home() {
           transition={{ delay: 0.2 }}
           className="max-w-2xl mx-auto text-white/50 text-sm md:text-base leading-relaxed mb-10 tracking-wide"
         >
-          Elevate your website against 11 GEO/SEO specifications. Detect gaps that could affect AI visibility and download a technical remediation report for your technical agency.
+          Evaluate your brand website against GEO/AEO & SEO specifications using this Auditor. Detects gaps in AI visibility and download a remediation report for your technical agency.
         </motion.p>
 
         <motion.div
@@ -237,7 +238,7 @@ export default function Home() {
                    </button>
                  </div>
                  
-                 <MetricsGrid metrics={metricsData} />
+                 <CategorizedResults categories={categoryGroups} />
 
                  {/* PRINT ONLY: DETAILED TECHNICAL REPORT */}
                  <div className="print-only">
@@ -272,11 +273,14 @@ export default function Home() {
                        <div className="report-footer">Geo Agentic Auditor</div>
                     </div>
 
-                    {/* PAGE 2-X: DETAILED METRICS */}
-                    <div className="report-page">
-                       <h2 className="text-2xl mb-8 uppercase">Detailed Analysis & Remediation</h2>
+                    {/* PAGE 2-X: DETAILED METRICS BY CATEGORY */}
+                    {categoryGroups.map((cat) => (
+                    <div key={cat.id} className="report-page">
+                       <h2 className="text-2xl mb-2 uppercase">{cat.title}</h2>
+                       <p className="text-xs text-muted mb-1 uppercase tracking-widest font-bold">Effort Level: {cat.effort}</p>
+                       <p className="text-xs text-muted mb-8 italic">{cat.description}</p>
                        
-                       {metricsData.map((m, idx) => (
+                       {cat.metrics.map((m) => (
                           <div key={m.id} className="finding-card mb-12">
                              <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-xl font-bold border-none p-0 m-0">{m.label}</h3>
@@ -308,6 +312,7 @@ export default function Home() {
                        ))}
                        <div className="report-footer">Geo Agentic Auditor</div>
                     </div>
+                    ))}
 
                     {/* FINAL PAGE: CREDITS */}
                     <div className="report-page flex flex-col items-center justify-center text-center">
@@ -379,8 +384,26 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-white/5 py-12 text-center no-print">
-         <div className="text-xs text-white/30 uppercase tracking-widest">
-            Developed by <span className="text-[#D4A373] ml-1">Eduardo Arana & Soda 🥤</span>
+         <div className="flex items-center justify-center gap-2 flex-wrap">
+            <div className="text-xs text-white/30 uppercase tracking-widest">
+               Developed by <span className="text-[#D4A373] ml-1">Eduardo Arana & Soda 🥤</span>
+            </div>
+            <a
+               href="https://ko-fi.com/arananet"
+               target="_blank"
+               rel="noopener noreferrer"
+               className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-opacity hover:opacity-85 select-none"
+               style={{ backgroundColor: '#00b9fe', color: '#fff' }}
+            >
+               {/* eslint-disable-next-line @next/next/no-img-element */}
+               <img
+                  src="https://storage.ko-fi.com/cdn/logomarkLogo.png"
+                  alt=""
+                  aria-hidden="true"
+                  style={{ height: '20px', width: '20px' }}
+               />
+               Support this via Ko-fi
+            </a>
          </div>
       </footer>
     </main>

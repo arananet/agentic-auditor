@@ -2,28 +2,91 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Geo Agentic Auditor API",
-    "version": "1.0.0"
+    "version": "2.0.0",
+    "description": "Queue-based GEO audit API with Cloudflare Turnstile protection and live log streaming."
   },
   "paths": {
     "/api/audit": {
       "post": {
-        "summary": "Run GEO Audit",
+        "summary": "Enqueue a GEO audit job",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "url": { "type": "string" },
-                  "turnstileToken": { "type": "string" }
+                  "url": {
+                    "type": "string",
+                    "description": "Public URL to audit (must be http/https; private IPs rejected)"
+                  },
+                  "token": {
+                    "type": "string",
+                    "description": "Cloudflare Turnstile challenge token from the frontend widget"
+                  }
                 },
-                "required": ["url", "turnstileToken"]
+                "required": ["url", "token"]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Audit Results" }
+          "200": {
+            "description": "Job enqueued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobId": { "type": "string", "description": "UUID for polling" },
+                    "status": { "type": "string", "enum": ["queued", "processing"] },
+                    "position": { "type": "number" }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "description": "Missing or invalid Turnstile token" },
+          "429": { "description": "Rate limit exceeded (10 req/min per IP)" }
+        }
+      },
+      "get": {
+        "summary": "Poll audit job status",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job status and partial/full result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobId": { "type": "string" },
+                    "status": { "type": "string", "enum": ["queued", "processing", "completed", "failed"] },
+                    "position": { "type": "number" },
+                    "log": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "description": "Live per-strategy log lines accumulated so far"
+                    },
+                    "result": {
+                      "type": "object",
+                      "description": "AuditResponse — present only when status=completed"
+                    },
+                    "error": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "Job not found or expired" }
         }
       }
     }

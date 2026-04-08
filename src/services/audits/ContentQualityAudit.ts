@@ -12,6 +12,23 @@ export class ContentQualityAudit implements IAuditStrategy {
       || $('meta[itemprop="datePublished"]').length > 0
       || $('[class*="date"], [class*="publish"]').filter((_, el) => /\d{4}/.test($(el).text())).length > 0;
 
+    // GEO: Freshness recency — AI engines heavily weight recently updated content
+    const modifiedTimeMeta = $('meta[property="article:modified_time"]').attr('content') || '';
+    const publishTimeMeta = $('meta[property="article:published_time"]').attr('content') || '';
+    const bestDateStr = modifiedTimeMeta || publishTimeMeta || '';
+    let freshnessLevel: 'excellent' | 'good' | 'stale' | 'unknown' = 'unknown';
+    if (bestDateStr) {
+      const dateMs = Date.parse(bestDateStr);
+      if (!isNaN(dateMs)) {
+        const daysSince = Math.floor((Date.now() - dateMs) / (1000 * 60 * 60 * 24));
+        if (daysSince <= 30) freshnessLevel = 'excellent';
+        else if (daysSince <= 180) freshnessLevel = 'good';
+        else freshnessLevel = 'stale';
+      }
+    }
+    const bodyText = $('body').text();
+    const hasVisibleUpdateDate = /\b(last\s+updated|updated\s+on|modified|actualizado|atualizado|mis\s+à\s+jour|aktualisiert|aggiornato)\b/i.test(bodyText);
+
     // GEO: Meta description — AI engines use this as a summary signal
     const metaDesc = $('meta[name="description"]').attr('content') || '';
     const hasMetaDesc = metaDesc.length >= 50 && metaDesc.length <= 300;
@@ -44,11 +61,16 @@ export class ContentQualityAudit implements IAuditStrategy {
     const wordDensityScore = Math.min(30, Math.floor(wordCount / 50));
 
     let score = wordDensityScore;
-    if (hasAuthorMeta) score += 15;
-    if (hasPublishDate) score += 15;
-    if (hasMetaDesc) score += 15;
-    score += Math.round((ogTagCount / 4) * 15);
-    if (hasValidDatetime) score += 10;
+    if (hasAuthorMeta) score += 12;
+    if (hasPublishDate) score += 10;
+    if (hasMetaDesc) score += 13;
+    score += Math.round((ogTagCount / 4) * 12);
+    if (hasValidDatetime) score += 8;
+    if (freshnessLevel === 'excellent') score += 8;
+    else if (freshnessLevel === 'good') score += 5;
+    else if (freshnessLevel === 'stale') score += 2;
+    if (hasVisibleUpdateDate) score += 5;
+    if (modifiedTimeMeta) score += 2;
 
     let finalScore = score;
     let explanation = 'E-E-A-T signals require transparent authorship and substantial depth.';
@@ -62,6 +84,8 @@ Word count: ${wordCount}. Has author meta: ${hasAuthorMeta}. Has publish date: $
 Meta description: ${hasMetaDesc ? `"${metaDesc.slice(0, 160)}" (${metaDesc.length} chars)` : 'MISSING'}.
 Open Graph: og:title=${ogTitle ? 'yes' : 'no'}, og:description=${ogDesc ? 'yes' : 'no'}, og:image=${ogImage ? 'yes' : 'no'}, og:type=${ogType || 'missing'}.
 <time datetime> ISO 8601: ${validDatetimeCount} valid element(s) found.
+Freshness: article:modified_time=${modifiedTimeMeta || 'MISSING'}. Recency level: ${freshnessLevel}. Visible "Last updated" text: ${hasVisibleUpdateDate}.
+ChatGPT cites content updated within 30 days 3.2x more often (SE Ranking, 129K domains).
 High scores require authorship, freshness, deep content, AND complete machine-readable metadata (meta description 50-160 chars, OG tags, valid ISO datetime).
 Provide feedback and remediation suggestions in English, but acknowledge the page language.`;
       const text = rawText.trim().replace(/\s+/g, ' ');
@@ -83,6 +107,7 @@ Provide feedback and remediation suggestions in English, but acknowledge the pag
         { message: hasMetaDesc ? `Meta description present (${metaDesc.length} chars).` : 'Missing or inadequate meta description.', explanation: hasLlmMessage ? explanation : 'AI engines use meta descriptions as a summary signal for snippet generation and entity extraction.', remediation: hasLlmMessage ? remediation : 'Add <meta name="description"> with 50-160 chars summarizing the page content.', source: { label: 'Google Search Central – Meta descriptions', url: 'https://developers.google.com/search/docs/appearance/snippet#meta-descriptions' }, location: '<head> <meta name="description">' },
         { message: ogTagCount >= 3 ? `Open Graph tags present (${ogTagCount}/4).` : `Incomplete Open Graph tags (${ogTagCount}/4).`, explanation: hasLlmMessage ? explanation : 'OG tags (og:title, og:description, og:image, og:type) provide structured metadata that AI engines use for entity resolution and rich previews.', remediation: hasLlmMessage ? remediation : 'Add og:title, og:description, og:image, and og:type meta tags.', source: { label: 'Open Graph Protocol', url: 'https://ogp.me/' }, location: '<head> <meta property="og:*">' },
         { message: hasValidDatetime ? `Valid ISO 8601 datetime found (${validDatetimeCount} element${validDatetimeCount > 1 ? 's' : ''}).` : 'No valid <time datetime> with ISO 8601 format.', explanation: hasLlmMessage ? explanation : 'Machine-readable ISO 8601 dates in <time datetime> enable AI engines to assess content freshness accurately.', remediation: hasLlmMessage ? remediation : 'Use <time datetime="2024-01-15T10:00:00Z"> with ISO 8601 format.', source: { label: 'HTML Living Standard – time element', url: 'https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-time-element' }, location: '<time datetime="..."> elements' },
+        { message: freshnessLevel === 'excellent' ? 'Content recently updated (within 30 days) — excellent freshness.' : freshnessLevel === 'good' ? 'Content updated within 6 months — good freshness.' : freshnessLevel === 'stale' ? 'Content older than 6 months — stale.' : 'No article:modified_time detected — freshness unknown.', explanation: hasLlmMessage ? explanation : 'ChatGPT cites content updated within 30 days 3.2x more often than older content (SE Ranking, 129K domains).', remediation: hasLlmMessage ? remediation : 'Add <meta property="article:modified_time"> with current date, display "Last updated: [date]" prominently, and refresh competitive content quarterly.', source: { label: 'SE Ranking (2025) — Domain authority study, 129K domains', url: 'https://seranking.com/blog/ai-overviews-study/' }, location: '<meta property="article:modified_time"> + visible update text' },
         { message: wordDensityScore >= 20 ? 'Rich content depth.' : 'Thin content detected.', explanation: hasLlmMessage ? explanation : 'AI models struggle to summarize pages with fewer than 1,000 words of substantive text.', remediation: hasLlmMessage ? remediation : 'Expand core pages to exceed 1,500 words with in-depth answers.', source: { label: 'Google Search Quality Rater Guidelines', url: 'https://static.googleusercontent.com/media/guidelines.raterhub.com/en//searchqualityevaluatorguidelines.pdf' }, location: `<main>/<article> body text (${wordCount} words)` }
       ]
     };

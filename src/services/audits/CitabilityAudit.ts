@@ -30,12 +30,37 @@ export class CitabilityAudit implements IAuditStrategy {
     let optimalPassageCount = 0;
     let tooShortCount = 0;
     let tooLongCount = 0;
+    // AEO: 40-60 word passages are optimal for featured snippet extraction
+    let snippetPassageCount = 0;
+    // GEO: Sourced statistics — "According to [Source]", "[Source] found/reports"
+    let sourcedStatCount = 0;
+    // GEO: Expert quote attribution — '"...," says [Name]', 'according to [Expert]'
+    let expertQuoteCount = 0;
 
     const answerBlockIndicators = [
       ...(CitabilityAudit.ANSWER_INDICATORS[language] || []),
       ...(language !== 'en' ? CitabilityAudit.ANSWER_INDICATORS['en'] : [])
     ];
     const statIndicators = [/\b\d+(\.\d+)?\s*(%|percent)\b/i, /\b(increased|decreased)\b.*\b\d+\b/i, /\b\d+(k|m|b)\b/i];
+    // Sourced attribution patterns (language-agnostic)
+    const sourcedPatterns = [
+      /according to\s+[A-Z]/i, /\b(study|research|report|survey|analysis)\s+(by|from)\s+/i,
+      /\b(found|reports?|shows?|reveals?|indicates?)\s+that\b/i,
+      /\([^)]*\d{4}[^)]*\)/,  // parenthetical year citations e.g. (Smith 2024)
+    ];
+    // Expert quote patterns
+    const quotePatterns = [
+      /[""][^""]{20,}[""],?\s*(says?|said|explains?|notes?|adds?|argues?|states?)\s+/i,
+      /[""][^""]{20,}[""],?\s*according to\s+/i,
+      /\bsays?\s+[A-Z][a-z]+\s+[A-Z]/,  // says Jane Smith
+    ];
+
+    // Check first content paragraph for definition block ("X is Y" opening)
+    let hasDefinitionBlock = false;
+    const firstContentP = paragraphs[0] || '';
+    if (firstContentP.length > 40 && answerBlockIndicators.some(ind => firstContentP.toLowerCase().includes(ind))) {
+      hasDefinitionBlock = true;
+    }
 
     paragraphs.forEach(p => {
       const wc = wordCount(p);
@@ -49,6 +74,14 @@ export class CitabilityAudit implements IAuditStrategy {
       if (statIndicators.some(regex => regex.test(p))) {
         statScore += 15;
       }
+      // Sourced statistics (stat + attribution in same paragraph)
+      if (sourcedPatterns.some(r => r.test(p)) && statIndicators.some(r => r.test(p))) {
+        sourcedStatCount++;
+      }
+      // Expert quotes
+      if (quotePatterns.some(r => r.test(p))) {
+        expertQuoteCount++;
+      }
       // Passage-length analysis (50-200 words is usable; 134-167 is optimal)
       if (wc >= 134 && wc <= 167) {
         optimalPassageCount++;
@@ -59,27 +92,36 @@ export class CitabilityAudit implements IAuditStrategy {
       } else if (wc > 200) {
         tooLongCount++;
       }
+      // AEO snippet window (40-60 words)
+      if (wc >= 40 && wc <= 60) {
+        snippetPassageCount++;
+      }
     });
 
     const passageLengthScore = Math.min(40, optimalPassageCount * 10);
     let finalScore = Math.min(60, answerBlockScore) + Math.min(40, statScore);
-    // Blend in passage-length signal (up to ±10 points)
-    finalScore = Math.min(100, finalScore + Math.min(10, passageLengthScore / 4));
+    // GEO evidence signals (sourced stats +40%, expert quotes +30% per Princeton GEO study)
+    const evidenceScore = Math.min(15, sourcedStatCount * 5) + Math.min(10, expertQuoteCount * 5);
+    const definitionBonus = hasDefinitionBlock ? 5 : 0;
+    const snippetBonus = Math.min(5, snippetPassageCount * 2);
+
+    finalScore = Math.min(100, finalScore + Math.min(10, passageLengthScore / 4) + evidenceScore + definitionBonus + snippetBonus);
     // Penalise if majority of passages are too long (hard for AI to extract)
     if (tooLongCount > optimalPassageCount + tooShortCount) {
       finalScore = Math.max(0, finalScore - 10);
     }
 
-    let explanation = 'AI citation rate improves by up to 40% with statistics and 115% with authority quotes. Optimal passage length is 134–167 words (self-contained, fact-rich, answer-first).';
-    let remediation = 'Structure each section as a standalone 134–167 word passage that answers one question directly in the first sentence, followed by supporting data.';
+    let explanation = 'AI citation rate improves by +40% with sourced statistics, +30% with expert quotes, and +25% with authoritative tone (Princeton GEO study, KDD 2024). Optimal passage length: 134–167 words for AI extraction, 40–60 words for featured snippets.';
+    let remediation = 'Structure each section as a standalone 134–167 word passage. Include "According to [Source]" citations, expert quotes with titles, and specific statistics with named sources.';
     let hasLlmMessage = false;
 
     if (LlmAnalyzer.isConfigured()) {
-      const systemPrompt = `Evaluate the following text for "AI Citability" (GEO 2026 standards).
+      const systemPrompt = `Evaluate the following text for "AI Citability" (GEO/AEO 2026 standards).
 The page is in "${language}". Evaluate the content IN ITS ORIGINAL LANGUAGE — do not penalize for not being in English.
-High scores (80-100) require: dense definition patterns ("X is Y" or the ${language} equivalent), hard statistical metrics, passages of 134-167 words that are self-contained and answer-first, and original data.
-Low scores (0-40) are for fluffy, vague marketing copy lacking facts or oversized wall-of-text paragraphs AI cannot extract.
-Research: adding statistics boosts citation by +40%, adding authority quotes by +115% (Princeton/Georgia Tech/IIT Delhi, GEO paper KDD 2024). Provide specific feedback.`;
+High scores (80-100) require: dense definition patterns ("X is Y"), sourced statistics with named references ("According to [Source]", "[Study] found that..."), expert quotes with attribution ("says [Name], [Title]"), self-contained passages of 134-167 words, and 40-60 word snippet paragraphs for featured snippet extraction.
+Princeton GEO research (KDD 2024): sourced citations boost visibility +40%, statistics +37%, expert quotes +30%, authoritative tone +25%. Keyword stuffing reduces visibility by -10%.
+Sourced stats found: ${sourcedStatCount}. Expert quotes: ${expertQuoteCount}. Definition block: ${hasDefinitionBlock}. Snippet-ready passages (40-60 words): ${snippetPassageCount}.
+Low scores (0-40) are for fluffy, vague marketing copy lacking facts or unsourced claims.`;
       const llmResult = await LlmAnalyzer.analyzeWithFeedback(paragraphs.join('\n').slice(0, 3000), systemPrompt);
       if (llmResult) {
         finalScore = Math.round((finalScore * 0.2) + (llmResult.score * 0.8));
@@ -107,11 +149,32 @@ Research: adding statistics boosts citation by +40%, adding authority quotes by 
           location: `<p> elements (${paragraphs.length} analyzed)`
         },
         {
+          message: sourcedStatCount > 0 ? `${sourcedStatCount} sourced statistic(s) with attribution found.` : 'No sourced statistics with attribution detected.',
+          explanation: hasLlmMessage ? explanation : 'Statistics with named sources boost AI visibility by +37-40% (Princeton GEO study). "According to [Source], [stat]" patterns are 3x more citable than unsourced claims.',
+          remediation: hasLlmMessage ? remediation : 'Add "According to [Source]" framing. Cite original research, include dates on all statistics. e.g. "According to Google\'s 2024 report, 70% of web traffic comes from mobile devices."',
+          source: { label: 'GEO: Generative Engine Optimization — Citation & statistics methods (KDD 2024)', url: 'https://arxiv.org/abs/2311.09735' },
+          location: '<p> — "According to...", "[Source] found/reports..." patterns'
+        },
+        {
+          message: expertQuoteCount > 0 ? `${expertQuoteCount} expert quote(s) with attribution found.` : 'No expert quotes with attribution detected.',
+          explanation: hasLlmMessage ? explanation : 'Named expert attribution increases citation likelihood by +30% (Princeton GEO study). AI systems prefer "says [Name], [Title] at [Organization]" patterns for trustworthiness.',
+          remediation: hasLlmMessage ? remediation : 'Add expert quotes: \'"[insight]," says [Name], [Title] at [Organization].\' Include author bios with relevant credentials.',
+          source: { label: 'GEO: Generative Engine Optimization — Expert quotation method (KDD 2024)', url: 'https://arxiv.org/abs/2311.09735' },
+          location: '<p> — \'"...", says [Name]\' attribution patterns'
+        },
+        {
           message: passageLengthMsg,
           explanation: 'AI systems preferentially extract passages of 134–167 words that are self-contained and answer-first. Passages outside this window are cited ~30–40% less frequently.',
           remediation: 'Restructure key sections into 134–167 word standalone passages. Each should name its subject, open with a direct answer, and include at least one specific statistic.',
           source: { label: 'Bortolato (2025) – AI Overview passage length analysis; GEO paper (Aggarwal et al., KDD 2024)', url: 'https://arxiv.org/abs/2311.09735' },
-          location: `<p> — ${optimalPassageCount} optimal (134–167w), ${tooLongCount} oversized (>200w)`
+          location: `<p> — ${optimalPassageCount} optimal (134–167w), ${snippetPassageCount} snippet-ready (40–60w), ${tooLongCount} oversized (>200w)`
+        },
+        {
+          message: hasDefinitionBlock ? 'Definition block found in first paragraph — strong "What is X?" signal.' : 'No definition block in first paragraph.',
+          explanation: hasLlmMessage ? explanation : 'AEO: Pages that open with a concise definition ("[Term] is [definition]") are significantly more likely to be extracted for "What is X?" queries and featured snippets.',
+          remediation: hasLlmMessage ? remediation : 'Start your first paragraph with a clear definition: "[Topic] is [concise 1-sentence definition]. [Expanded explanation with key characteristics]."',
+          source: { label: 'AEO Content Patterns — Definition block for "What is X?" queries', url: 'https://arxiv.org/abs/2311.09735' },
+          location: 'First <p> element in content'
         }
       ]
     };

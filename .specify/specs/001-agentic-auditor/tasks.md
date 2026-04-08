@@ -36,3 +36,14 @@
 - [x] Add Cloudflare Workers AI Free Tier notice (10,000 neurons/day) to hero section.
 - [x] Add `printReport()` filename stamping (`GEO_Audit_<host>_<ts>`).
 - [x] Create CLI batch auditor (`cli/index.ts`) with Markdown and PDF reporters.
+
+## Phase 5: AEO/GEO Signal Enrichment & UI Categorisation
+- [x] `CitabilityAudit` — Add `snippetPassageCount` (40–60w passages), `sourcedStatCount`, `expertQuoteCount`, `hasDefinitionBlock`; compute `evidenceScore`, `definitionBonus`, `snippetBonus`; add 3 new detail entries; update LLM systemPrompt with Princeton GEO stats.
+- [x] `ContentQualityAudit` — Add `modifiedTimeMeta`, `publishTimeMeta`, `freshnessLevel` recency classification; add `hasVisibleUpdateDate` regex; rescale scoring weights; add freshness detail entry; update LLM systemPrompt with SE Ranking stat.
+- [x] `StructuralAudit` — Add `faqHeadingCount`, `questionHeadingCount`, `comparisonTableCount` detection; recalibrate score caps; update `structureContext` and `systemPrompt`; add FAQ and comparison detail entries.
+- [x] `SemanticAudit` — Add multilingual stopword set; compute `wordFreq`, `topOverusedWords`, `isKeywordStuffed`, `stuffingPenalty`; apply penalty to `totalScore`; add stuffing detail entry; update LLM systemPrompt.
+- [x] `BrandMentionsAudit` — Add `thirdPartyReviewDomains`, `highWeightDomains`; merge into `allTrackDomains`; compute `highWeightLinks`, `reviewLinks`, `highWeightBonus`, `reviewBonus`; recalibrate `socialScore` to max 30; add 2 new detail entries; update LLM context and systemPrompt.
+- [x] `CategorizedResults.tsx` — New component; exports `CATEGORY_DEFS`, `MetricItem`, `CategoryGroup`; renders 3 animated category cards with effort badges and per-metric score/status rows.
+- [x] `MetricsGrid.tsx` — Update location indicator icon `⚆` → `⦿`.
+- [x] `page.tsx` — Import `CategorizedResults`/`CATEGORY_DEFS`/`MetricItem`/`CategoryGroup`; type `metricsData` as `MetricItem[]`; update all 11 metric descriptions; compute `metricsMap` + `categoryGroups`; replace `<MetricsGrid>` with `<CategorizedResults categories={categoryGroups} />`; update print PDF section to loop by `categoryGroups` with effort level output.
+- [x] Ko-fi support button added inline to footer alongside credit line.
