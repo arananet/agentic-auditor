@@ -1,6 +1,6 @@
 # Geo Agentic Auditor
 
-Geo Agentic Auditor is a deterministic, heuristics-based, and LLM-accelerated Generative Engine Optimization (GEO) scanner. It evaluates a website's readiness for next-generation AI agents, LLMs, and RAG pipelines using **11 dedicated metrics** across three effort tiers: Quick Win, Editorial, and Development.
+Geo Agentic Auditor is a deterministic, heuristics-based, and LLM-accelerated Generative Engine Optimization (GEO) scanner. It evaluates a website's readiness for next-generation AI agents, LLMs, and RAG pipelines using **12 dedicated metrics** across three effort tiers: Quick Win, Editorial, and Development.
 
 ## Features
 
@@ -70,7 +70,7 @@ npm run audit:cli -- --urls-file cli/urls.example.txt --output ./reports --forma
 npm run audit:cli -- --url https://www.example.com --format pdf
 ```
 
-## 11 GEO Metrics Evaluated
+## 12 GEO Metrics Evaluated
 
 | # | Metric | What it checks | Effort tier |
 |---|---|---|---|
@@ -78,13 +78,14 @@ npm run audit:cli -- --url https://www.example.com --format pdf
 | 2 | **Technical Readiness** | SSR vs CSR detection; `robots.txt` per-block parsing for 16 verified AI crawlers; canonical URL; hreflang locale tags; XML Sitemap reachability | Quick Win |
 | 3 | **Schema Depth** | JSON-LD `@graph` traversal; 15 priority schema types (incl. `SpeakableSpecification`) + microdata; required-property quality validation | Development |
 | 4 | **A2A Handshakes** | `llms.txt`, `llms-full.txt`, `.well-known/agent.json` presence and quality | Quick Win |
-| 5 | **Brand Authority** | Outbound authority links across 25+ platforms; high-weight domains (Wikipedia, Reddit, YouTube) scored separately; third-party review platforms (G2, Capterra, Trustpilot, Quora, Medium…); About/Contact/Trust pages | Editorial |
-| 6 | **Content E-E-A-T** | Authorship metadata; publish dates; `article:modified_time` freshness recency (excellent ≤30d / good ≤180d / stale); visible "Last updated" text; meta description; Open Graph tags; `<time datetime>` ISO 8601 | Editorial |
+| 5 | **Brand Authority** | Outbound authority links across 25+ platforms; high-weight domains (Wikipedia, Reddit, YouTube); third-party review platforms (G2, Capterra, Trustpilot…); About/Contact/Trust pages; **on-page social proof**: testimonial blocks (+30% citation lift), quantified proof metrics (+37%), customer logo grids, aggregate ratings, case study sections (~12% of AI citations per ZipTie) | Editorial |
+| 6 | **Content E-E-A-T** | Authorship metadata; publish dates; `article:modified_time` freshness recency (excellent ≤30d / good ≤180d / stale); visible "Last updated" text; meta description; Open Graph tags; `<time datetime>` ISO 8601; **H1 quality** (optimal 10–80 chars); **above-the-fold substance** (first-paragraph content density); **objection-handling content** (guarantees, free-trial signals) | Editorial |
 | 7 | **Intent Match** | Conversational interrogative headings matching user query patterns | Editorial |
 | 8 | **Structural GEO** | Lists, tables, semantic HTML5; table header semantics; **FAQ sections** + question-phrased headings (AEO snippet signal); **comparison tables** (~33% of AI citations per ZipTie) | Development |
 | 9 | **Semantic Depth** | Lexical diversity (500-word sample); content length vs 1,500-word threshold; **keyword stuffing detection** (non-stopword >3% density → up to −10pt penalty, Princeton GEO KDD 2024) | Editorial |
 | 10 | **Media Context** | Descriptive alt-text ratio for Vision-Language Models; `<figure>`/`<figcaption>` semantic image context | Editorial |
 | 11 | **Tone Alignment** | Authoritative vocabulary density vs weak qualifiers | Editorial |
+| 12 | **Topical Coverage** | Internal link density (same-domain, cluster connectivity); heading hierarchy depth (H1→H2→H3 topic tree); related-content section presence ("See Also", "Related Articles"); category/tag taxonomy links; breadcrumb navigation — pages in well-structured clusters are cited **2.1× more often** (SE Ranking 2025, 129K domains) | Editorial |
 
 > Geo Metrics based on the https://github.com/zubair-trabzada/geo-seo-claude framework.
 
@@ -129,23 +130,27 @@ Every finding in the auditor references its backing standard. The table below li
 | [llmstxt.org — LLM Text Standard](https://llmstxt.org) | `llms.txt` and `llms-full.txt` specification and format |
 | [Google A2A Protocol](https://google.github.io/A2A/) | `.well-known/agent.json` A2A discovery manifest format |
 
-### Brand Authority
+### Brand Authority & On-Page Social Proof
 | Source | Purpose |
 |---|---|
 | Ahrefs (Dec 2025) — Brand mentions vs backlinks in AI visibility | 75K-brand study: brand mentions 3× stronger than backlinks for AI citations; YouTube and Reddit carry highest weight |
-| [Google E-E-A-T — Authoritativeness & Trustworthiness](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) | Framework for brand authority signals (About pages, contact info, trust markers) |
+| [Google E-E-A-T — Authoritativeness & Trustworthiness](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) | Framework for brand authority signals (About pages, contact info, trust markers) and on-page credibility |
 | ChatGPT Citation Distribution Analysis | Wikipedia 7.8%, Reddit 1.8%, Forbes 1.1% of ChatGPT citations; high-weight domains scored separately (+5 pts each, capped at +10) |
 | Third-party review platforms | G2, Capterra, TrustRadius, Trustpilot, Quora, Medium, ProductHunt, Yelp, BBB, SiteJabber — external social proof signals (+3 pts each, capped at +5) |
+| [Aggarwal et al. (2023) — GEO: Generative Engine Optimization, KDD 2024](https://arxiv.org/abs/2311.09735) | On-page social proof signals: expert quotes +30%, sourced statistics +37%, authoritative tone +25% citation lift; basis for testimonial and proof-metric scoring |
+| [ZipTie (2024) — AI Content-Answer Fit Analysis (400K pages)](https://ziptie.dev/research/ai-content-types) | Case study content accounts for ~12% of AI engine citations; customer logo grids and case study sections scored as high-credibility trust signals |
 
 ### Content E-E-A-T
 | Source | Purpose |
 |---|---|
-| [Google E-E-A-T — Expertise & Authoritativeness](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) | Authorship metadata, freshness dating, content depth |
+| [Google E-E-A-T — Expertise & Authoritativeness](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) | Authorship metadata, freshness dating, content depth, H1 clarity, above-the-fold substance, and objection-handling trust signals |
 | [Google Search Quality Rater Guidelines](https://static.googleusercontent.com/media/guidelines.raterhub.com/en//searchqualityevaluatorguidelines.pdf) | Thin content thresholds (< 1,000 words) |
 | [Google Search Central – Meta descriptions](https://developers.google.com/search/docs/appearance/snippet#meta-descriptions) | Meta description quality for summary and snippet generation |
 | [Open Graph Protocol](https://ogp.me/) | og:title, og:description, og:image, og:type for entity resolution |
 | [HTML Living Standard – time element](https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-time-element) | `<time datetime>` ISO 8601 for machine-readable freshness signals |
 | [SE Ranking (2025) — 129K Domain AI Citation Study](https://seranking.com/blog/ai-overviews-study/) | Content updated within 30 days cited 3.2× more often by ChatGPT; `article:modified_time` + visible "Last updated" text are primary freshness signals |
+| [Aggarwal et al. (2023) — GEO: Generative Engine Optimization, KDD 2024](https://arxiv.org/abs/2311.09735) | Answer-first content structure and subject-predicate H1 openings improve AI extraction; basis for H1 optimal-length (10–80 chars) scoring |
+| [Google — Creating helpful, reliable, people-first content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) | Pages should immediately deliver above-the-fold textual substance; hero-image-only openings reduce AI extraction likelihood |
 
 ### Intent Match
 | Source | Purpose |
@@ -177,6 +182,15 @@ Every finding in the auditor references its backing standard. The table below li
 | Source | Purpose |
 |---|---|
 | [Google E-E-A-T — Trust & Authoritativeness](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) | Authoritative vocabulary vs weak qualifiers; AI trust score derivation |
+
+### Topical Coverage
+| Source | Purpose |
+|---|---|
+| [SE Ranking (2025) — 129K Domain AI Citation Study](https://seranking.com/blog/ai-overviews-study/) | Primary basis: pages embedded in topic clusters with strong internal linking are cited **2.1× more often** by AI engines; orphaned pages with few internal links rarely appear in AI-generated answers |
+| [Aggarwal et al. (2023) — GEO: Generative Engine Optimization, KDD 2024](https://arxiv.org/abs/2311.09735) | Comprehensive topic coverage within a structured heading hierarchy (H1→H2→H3) is a significant AI-citation predictor; AI engines use the heading outline as a "topic map" |
+| [Google — Creating helpful, reliable, people-first content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) | Comprehensive, in-depth coverage of a topic (demonstrating topical authority) is a primary ranking and citation signal; shallow or isolated content is deprioritised |
+| [Google Search Central — Breadcrumbs structured data](https://developers.google.com/search/docs/appearance/structured-data/breadcrumb) | BreadcrumbList schema and breadcrumb navigation signal site hierarchy depth; AI engines use this to understand topic relationships within a site |
+| [Google Search Central — Internal linking best practices](https://developers.google.com/search/docs/crawling-indexing/links-discoverable) | Internal links enable AI crawlers to discover related content; high internal link density signals strong topic cluster membership |
 
 ## License
 

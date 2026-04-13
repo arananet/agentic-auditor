@@ -31,5 +31,6 @@ export interface AuditResponse {
   semantic: AuditResult;
   media: AuditResult;
   sentiment: AuditResult;
+  topicalCoverage: AuditResult;
   log: string[];
 }

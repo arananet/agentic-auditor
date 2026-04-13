@@ -124,8 +124,8 @@ export const CATEGORY_DEFS = [
     effort: 'Editorial',
     effortColor: 'text-[#D4A373] border-[#D4A373]/30 bg-[#D4A373]/5',
     icon: <FileText size={22} />,
-    description: 'Content improvements requiring editorial and marketing collaboration: E-E-A-T metadata, content freshness, sourced statistics, expert quotes, citability patterns, conversational headings, semantic depth, keyword stuffing detection, tone alignment, image alt-text, and third-party brand authority.',
-    metricIds: ['contentQuality', 'citability', 'intentMatch', 'semantic', 'sentiment', 'brandMentions', 'media'],
+    description: 'Content improvements requiring editorial and marketing collaboration: E-E-A-T metadata, content freshness, H1 clarity, above-the-fold substance, sourced statistics, expert quotes, citability patterns, conversational headings, semantic depth, keyword stuffing detection, tone alignment, image alt-text, on-page social proof, third-party brand authority, and topical cluster integration.',
+    metricIds: ['contentQuality', 'citability', 'intentMatch', 'semantic', 'sentiment', 'brandMentions', 'media', 'topicalCoverage'],
   },
   {
     id: 'structural-gaps',
