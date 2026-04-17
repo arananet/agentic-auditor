@@ -183,3 +183,7 @@ Every finding in the auditor references its backing standard. The table below li
 MIT License. See the `LICENSE` file for more details.
 
 Developed by Eduardo Arana & Soda 🥤
+
+## Support the Project
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/H2H51MPWG)
