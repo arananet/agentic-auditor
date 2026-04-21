@@ -116,7 +116,7 @@ export const CATEGORY_DEFS = [
     effortColor: 'text-[#8FBC8F] border-[#8FBC8F]/30 bg-[#8FBC8F]/5',
     icon: <Shield size={22} />,
     description: 'Configuration-level changes your IT/DevOps team can deploy in hours: robots.txt AI crawler whitelist, llms.txt protocol, canonical URLs, sitemaps, and WAF rules to allow AI bots.',
-    metricIds: ['technical', 'llmstxt'],
+    metricIds: ['technical', 'llmstxt', 'sitemap'],
   },
   {
     id: 'content-signals',

@@ -10,6 +10,10 @@ export interface Job {
   createdAt: number;
   /** Live log lines streamed as each audit step completes */
   log: string[];
+  /** Base64 PNG — first capture right after page load */
+  screenshotInitial?: string;
+  /** Base64 PNG — final page the auditor actually analyzed */
+  screenshotFinal?: string;
 }
 
 const MAX_QUEUE_SIZE = 50;
@@ -65,9 +69,14 @@ class QueueManager {
       job.status = 'processing';
       
       try {
-        const result = await this.auditor.runAudit(job.url, (msg) => {
-          job.log.push(msg);
-        });
+        const result = await this.auditor.runAudit(
+          job.url,
+          (msg) => { job.log.push(msg); },
+          (key, data) => {
+            if (key === 'initial') job.screenshotInitial = data;
+            else job.screenshotFinal = data;
+          }
+        );
         job.status = 'completed';
         job.result = result;
       } catch (error: any) {

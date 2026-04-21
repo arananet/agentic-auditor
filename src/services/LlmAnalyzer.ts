@@ -15,6 +15,21 @@ const MIN_INTERVAL_MS = Math.ceil(60_000 / RATE_LIMIT_RPM); // 1000 ms
 let lastCallAt = 0;
 let rateLimitQueue = Promise.resolve();
 
+// ── Swarm concurrency tracking ──────────────────────────────────────────
+let activeSlots = 0;
+let peakSlots = 0;
+
+/** Returns { activeCalls, peakConcurrent } for the Agent Swarm Monitor. */
+export function swarmStats() {
+  return { activeCalls: activeSlots, peakConcurrent: peakSlots };
+}
+
+/** Reset peak counter — call at the start of each audit run. */
+export function resetSwarmStats() {
+  activeSlots = 0;
+  peakSlots = 0;
+}
+
 function scheduleCall<T>(fn: () => Promise<T>): Promise<T> {
   rateLimitQueue = rateLimitQueue.then(async () => {
     const now = Date.now();
@@ -26,7 +41,13 @@ function scheduleCall<T>(fn: () => Promise<T>): Promise<T> {
   // We chain the actual work after the rate-limit delay, but return its result
   // independently so callers get their own promise.
   return new Promise<T>((resolve, reject) => {
-    rateLimitQueue = rateLimitQueue.then(() => fn().then(resolve, reject).then(() => {}));
+    rateLimitQueue = rateLimitQueue.then(() => {
+      activeSlots++;
+      if (activeSlots > peakSlots) peakSlots = activeSlots;
+      return fn()
+        .then(resolve, reject)
+        .finally(() => { activeSlots--; });
+    });
   });
 }
 

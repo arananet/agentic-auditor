@@ -1,13 +1,17 @@
 # Geo Agentic Auditor
 
-Geo Agentic Auditor is a deterministic, heuristics-based, and LLM-accelerated Generative Engine Optimization (GEO) scanner. It evaluates a website's readiness for next-generation AI agents, LLMs, and RAG pipelines using **13 dedicated metrics** across three effort tiers: Quick Win, Editorial, and Development.
+Geo Agentic Auditor is a deterministic, heuristics-based, and LLM-accelerated Generative Engine Optimization (GEO) scanner. It evaluates a website's readiness for next-generation AI agents, LLMs, and RAG pipelines using **14 dedicated metrics** across three effort tiers: Quick Win, Editorial, and Development.
 
 ## Features
 
 - **Heuristic + Semantic Scanning**: Employs continuous density scoring and structural parsing to mimic how search engines (GPTBot, ClaudeBot, Perplexity) see the web.
-- **Playwright Rendering**: Uses a headless Chromium singleton to render fully JavaScript-driven websites before analysis.
+- **Agent Swarm Architecture**: 14 audit agents execute in parallel with a real-time Gantt chart showing execution timelines, peak concurrency, and per-agent durations.
+- **Oracle Governance Layer**: Post-execution cross-validation of all agent outputs — detects contradictions, anomalies, bot-block degradation, and thin-content artifacts. Annotates results with confidence levels and can override scores.
+- **WAF Detection & Solving**: Automatically identifies Cloudflare, Imperva, Datadome, and Akamai challenges. Attempts bypass via headless=new stealth browser; falls back to partial infrastructure-only audit if unsolvable.
+- **Dual Screenshot Capture**: Captures initial page load (may show WAF/CAPTCHA) and final audited content screenshots, displayed in a collapsible panel.
+- **Playwright Rendering**: Uses a headless Chromium singleton to render fully JavaScript-driven websites before analysis, with stealth patches for bot detection evasion.
 - **LLM Acceleration (Optional)**: Automatically upgrades from density heuristics to deep semantic NLP classification when configured with Cloudflare Workers AI (**Free Tier: 10,000 neurons/day**).
-- **Live Log Streaming**: Per-strategy progress lines streamed to the browser console panel in real time.
+- **Live Log Streaming**: Per-strategy progress lines with timing (t+Xs format) streamed to the browser console panel in real time.
 - **Turnstile Protected**: Robust edge-level bot protection ensures the audit tool cannot be abused.
 - **Print-to-PDF**: Browser-native technical report organised by effort category, stamped filename (`GEO_Audit_<host>_<ts>`).
 - **CLI Batch Auditor**: `npm run audit:cli` — audit one URL or a batch file, output `.md` + `.pdf` reports.
@@ -16,7 +20,7 @@ Geo Agentic Auditor is a deterministic, heuristics-based, and LLM-accelerated Ge
 
 ## Architecture
 
-This project is a Next.js 14 application. It uses **Playwright** headless Chromium for page rendering (replacing vanilla `fetch`) and **Cheerio** for high-performance DOM parsing of the rendered HTML. Plain-text resources (robots.txt, llms.txt) are fetched directly without a browser via the `fetchTextFile()` helper.
+This project is a Next.js 14 application. It uses **Playwright** headless Chromium for page rendering (replacing vanilla `fetch`) and **Cheerio** for high-performance DOM parsing of the rendered HTML. Plain-text resources (robots.txt, llms.txt) are fetched directly without a browser via the `fetchTextFile()` helper. The **Oracle Validator** runs post-execution to cross-validate all 14 agent outputs, detect contradictions, and annotate results with confidence levels.
 
 ## Getting Started
 
@@ -70,7 +74,7 @@ npm run audit:cli -- --urls-file cli/urls.example.txt --output ./reports --forma
 npm run audit:cli -- --url https://www.example.com --format pdf
 ```
 
-## 13 GEO Metrics Evaluated
+## 14 GEO Metrics Evaluated
 
 | # | Metric | What it checks | Effort tier |
 |---|---|---|---|
@@ -87,12 +91,13 @@ npm run audit:cli -- --url https://www.example.com --format pdf
 | 11 | **Tone Alignment** | Authoritative vocabulary density vs weak qualifiers | Editorial |
 | 12 | **Entity Authority** | **`sameAs` completeness** on Organization/Person (Wikipedia, Wikidata, LinkedIn, Crunchbase, X); Wikipedia/Wikidata entity presence; `WebSite` + `SearchAction` validation; Person/author schema quality (`jobTitle`, `knowsAbout`, `sameAs`); `LocalBusiness` NAP consistency | Development |
 | 13 | **PAA Optimization** | **People Also Ask** readiness — question-phrased H2/H3 heading clusters (multi-language: en, es, pt, fr, de, it); 30–50 word self-contained answer validation; consecutive Q&A cluster quality (5–8 ideal); too-short/too-long answer detection | Editorial |
+| 14 | **Sitemap AI Readiness** | XML sitemap discovery (robots.txt directive, `/sitemap.xml`, `/sitemap_index.xml`); `<lastmod>` freshness coverage; URL count vs 50K limit; entry staleness (>1yr); gzip/size optimization; mobile/image/video/news sub-sitemaps; index-of-indexes structure | Quick Win |
 
 > Geo Metrics contains pieces based on the https://github.com/zubair-trabzada/geo-seo-claude framework.
 
 ## Sources & References
 
-Every finding in the auditor references its backing standard. The table below lists the primary source for each of the 13 audit dimensions.
+Every finding in the auditor references its backing standard. The table below lists the primary source for each of the 14 audit dimensions.
 
 ### AI Citability
 | Source | Purpose |
@@ -203,6 +208,13 @@ Every finding in the auditor references its backing standard. The table below li
 | [seoClarity — AEO Content Patterns](https://www.seoclarity.net/blog/answer-engine-optimization) | People Also Ask optimization: question-phrased H2/H3 headings with 30–50 word self-contained answers as primary PAA extraction targets |
 | [Aggarwal et al. (2023) — GEO paper, KDD 2024](https://arxiv.org/abs/2311.09735) | Consecutive Q&A cluster quality (5–8 question-answer pairs ideal); question density as AEO readiness signal |
 | [Google Search Central — FAQ structured data](https://developers.google.com/search/docs/appearance/structured-data/faqpage) | FAQ-shaped content patterns that align with People Also Ask extraction heuristics |
+
+### Sitemap AI Readiness
+| Source | Purpose |
+|---|---|
+| [Sitemaps.org Protocol](https://www.sitemaps.org/protocol.html) | XML Sitemap standard: `<lastmod>`, `<changefreq>`, `<priority>`, 50K URL limit, 50MB uncompressed size limit |
+| [Google Search Central — Sitemaps](https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview) | Sitemap best practices for crawler discovery, freshness signals, and index management |
+| [Google Search Central — Robots.txt Sitemap directive](https://developers.google.com/search/docs/crawling-indexing/robots/robots_txt) | `Sitemap:` directive in robots.txt for automated sitemap discovery by AI crawlers |
 
 ## License
 
