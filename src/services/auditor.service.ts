@@ -12,6 +12,8 @@ import { StructuralAudit } from './audits/StructuralAudit';
 import { SemanticAudit } from './audits/SemanticAudit';
 import { MediaAudit } from './audits/MediaAudit';
 import { SentimentAudit } from './audits/SentimentAudit';
+import { EntityAuthorityAudit } from './audits/EntityAuthorityAudit';
+import { PaaAudit } from './audits/PaaAudit';
 import { fetchWithTimeout, isBotBlockPage } from './fetchWithTimeout';
 import { globalCache } from './CacheManager';
 import { LlmAnalyzer } from './LlmAnalyzer';
@@ -28,7 +30,9 @@ export class AuditorService {
     new StructuralAudit(),
     new SemanticAudit(),
     new MediaAudit(),
-    new SentimentAudit()
+    new SentimentAudit(),
+    new EntityAuthorityAudit(),
+    new PaaAudit()
   ];
 
   async runAudit(url: string, onLog?: (msg: string) => void): Promise<AuditResponse> {
@@ -119,8 +123,8 @@ export class AuditorService {
 
       await Promise.all(promises);
 
-      // We have 11 audits, max 1100 points
-      results.overallScore = Math.round((totalScore / 1100) * 100);
+      // We have 13 audits, max 1300 points
+      results.overallScore = Math.round((totalScore / 1300) * 100);
       emit(`[OK] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
       emit(`[OK] FINAL GEO SCORE: ${results.overallScore}/100`);
       

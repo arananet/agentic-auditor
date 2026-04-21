@@ -20,6 +20,8 @@ const AUDIT_LABELS: Record<keyof Omit<AuditResponse, 'overallScore' | 'log'>, st
   semantic: 'Semantic Depth',
   media: 'Media Context',
   sentiment: 'Tone Alignment',
+  entityAuthority: 'Entity Authority',
+  paa: 'PAA Optimization',
 };
 
 function auditCard(label: string, result: AuditResult): string {

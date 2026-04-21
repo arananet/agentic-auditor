@@ -1,6 +1,6 @@
 # Geo Agentic Auditor
 
-Geo Agentic Auditor is a deterministic, heuristics-based, and LLM-accelerated Generative Engine Optimization (GEO) scanner. It evaluates a website's readiness for next-generation AI agents, LLMs, and RAG pipelines using **11 dedicated metrics** across three effort tiers: Quick Win, Editorial, and Development.
+Geo Agentic Auditor is a deterministic, heuristics-based, and LLM-accelerated Generative Engine Optimization (GEO) scanner. It evaluates a website's readiness for next-generation AI agents, LLMs, and RAG pipelines using **13 dedicated metrics** across three effort tiers: Quick Win, Editorial, and Development.
 
 ## Features
 
@@ -70,27 +70,29 @@ npm run audit:cli -- --urls-file cli/urls.example.txt --output ./reports --forma
 npm run audit:cli -- --url https://www.example.com --format pdf
 ```
 
-## 11 GEO Metrics Evaluated
+## 13 GEO Metrics Evaluated
 
 | # | Metric | What it checks | Effort tier |
 |---|---|---|---|
-| 1 | **AI Citability** | Answer-block density; sourced statistics (+37% GEO lift); named expert quotes (+30%); first-paragraph definition blocks; 40–60 word AEO snippet passages; `evidenceScore` composite | Editorial |
+| 1 | **AI Citability** | Answer-block density; sourced statistics (+37% GEO lift); named expert quotes (+30%); first-paragraph definition blocks; 40–60 word AEO snippet passages; `evidenceScore` composite; **filler-phrase detection** (17 patterns that suppress snippet extraction); **answer-first positioning** (direct answer in first 40–60 words after H1/H2) | Editorial |
 | 2 | **Technical Readiness** | SSR vs CSR detection; `robots.txt` per-block parsing for 16 verified AI crawlers; canonical URL; hreflang locale tags; XML Sitemap reachability | Quick Win |
-| 3 | **Schema Depth** | JSON-LD `@graph` traversal; 15 priority schema types (incl. `SpeakableSpecification`) + microdata; required-property quality validation | Development |
-| 4 | **A2A Handshakes** | `llms.txt`, `llms-full.txt`, `.well-known/agent.json` presence and quality | Quick Win |
+| 3 | **Schema Depth** | JSON-LD `@graph` traversal; **20 priority schema types** (incl. `SpeakableSpecification`, `QAPage`, `DefinedTerm`, `ClaimReview`, `Course`, `JobPosting`) + microdata; required-property quality validation; **`sameAs` link validation** on Organization/Person (Wikipedia, Wikidata, LinkedIn, Crunchbase, X) | Development |
+| 4 | **A2A Handshakes** | `llms.txt` presence + **structural validation** (H1 title, blurb, H2 sections, markdown links per llmstxt.org spec); `llms-full.txt`; `.well-known/agent.json`; **RSL 1.0** licensing (`/.well-known/rsl.xml`); **AI meta robots** (`noai`/`noimageai`); **X-Robots-Tag** AI directives | Quick Win |
 | 5 | **Brand Authority** | Outbound authority links across 25+ platforms; high-weight domains (Wikipedia, Reddit, YouTube) scored separately; third-party review platforms (G2, Capterra, Trustpilot, Quora, Medium…); About/Contact/Trust pages | Editorial |
 | 6 | **Content E-E-A-T** | Authorship metadata; publish dates; `article:modified_time` freshness recency (excellent ≤30d / good ≤180d / stale); visible "Last updated" text; meta description; Open Graph tags; `<time datetime>` ISO 8601 | Editorial |
 | 7 | **Intent Match** | Conversational interrogative headings matching user query patterns | Editorial |
-| 8 | **Structural GEO** | Lists, tables, semantic HTML5; table header semantics; **FAQ sections** + question-phrased headings (AEO snippet signal); **comparison tables** (~33% of AI citations per ZipTie) | Development |
+| 8 | **Structural GEO** | Lists, tables, semantic HTML5; table header semantics; **FAQ sections** + question-phrased headings (AEO snippet signal); **comparison tables** (~33% of AI citations per ZipTie); **snippet-shape validation** (lists 5–9 items ≤12w each, tables ≤4 cols); **hidden/collapsed content detection** (`display:none`, `[hidden]`, `details:not([open])`, `.collapse:not(.show)`) | Development |
 | 9 | **Semantic Depth** | Lexical diversity (500-word sample); content length vs 1,500-word threshold; **keyword stuffing detection** (non-stopword >3% density → up to −10pt penalty, Princeton GEO KDD 2024) | Editorial |
-| 10 | **Media Context** | Descriptive alt-text ratio for Vision-Language Models; `<figure>`/`<figcaption>` semantic image context | Editorial |
+| 10 | **Media Context** | Descriptive alt-text ratio for Vision-Language Models; `<figure>`/`<figcaption>` semantic image context; **text↔media co-location scoring** (% of H2 sections with img/video/figure within 200 words); **video detection** (YouTube, Vimeo, Wistia embeds) | Editorial |
 | 11 | **Tone Alignment** | Authoritative vocabulary density vs weak qualifiers | Editorial |
+| 12 | **Entity Authority** | **`sameAs` completeness** on Organization/Person (Wikipedia, Wikidata, LinkedIn, Crunchbase, X); Wikipedia/Wikidata entity presence; `WebSite` + `SearchAction` validation; Person/author schema quality (`jobTitle`, `knowsAbout`, `sameAs`); `LocalBusiness` NAP consistency | Development |
+| 13 | **PAA Optimization** | **People Also Ask** readiness — question-phrased H2/H3 heading clusters (multi-language: en, es, pt, fr, de, it); 30–50 word self-contained answer validation; consecutive Q&A cluster quality (5–8 ideal); too-short/too-long answer detection | Editorial |
 
-> Geo Metrics based on the https://github.com/zubair-trabzada/geo-seo-claude framework.
+> Geo Metrics contains pieces based on the https://github.com/zubair-trabzada/geo-seo-claude framework.
 
 ## Sources & References
 
-Every finding in the auditor references its backing standard. The table below lists the primary source for each of the 11 audit dimensions.
+Every finding in the auditor references its backing standard. The table below lists the primary source for each of the 13 audit dimensions.
 
 ### AI Citability
 | Source | Purpose |
@@ -99,6 +101,7 @@ Every finding in the auditor references its backing standard. The table below li
 | Bortolato (2025) — AI Overview Passage Length Analysis | Corroborates 134–167 word window for AI Overview citations; oversized passages penalised |
 | [ZipTie (2024) — AI Content-Answer Fit Analysis (400K pages)](https://ziptie.dev/research/ai-content-types) | Content-answer fit 55% of citation likelihood; comparison articles ~33% of AI citations, definitive guides ~15%, original research ~12% |
 | [seoClarity — AEO Content Patterns](https://www.seoclarity.net/blog/answer-engine-optimization) | AEO snippet extraction optimal window: 40–60 words; definition blocks, FAQ sections, and self-contained answer passages as primary extraction targets |
+| [Brodie Clark (2024) — AI Overview Content Patterns](https://brodieseo.com/) | Filler phrases ("great question", "in this article", "let's dive in") suppress snippet extraction; answer-first positioning (direct answer in first 40–60 words) improves citation rates |
 
 ### Technical Readiness
 | Source | Purpose |
@@ -120,14 +123,17 @@ Every finding in the auditor references its backing standard. The table below li
 | Source | Purpose |
 |---|---|
 | [Google Search Central — Structured data overview](https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data) | JSON-LD implementation and Rich Result eligibility |
-| [Schema.org](https://schema.org) | Vocabulary definitions for Organization, FAQPage, Article, Product, BreadcrumbList, etc. |
+| [Schema.org](https://schema.org) | Vocabulary definitions for Organization, FAQPage, Article, Product, BreadcrumbList, QAPage, DefinedTerm, ClaimReview, Course, JobPosting, etc. |
 | [Google – Speakable structured data](https://developers.google.com/search/docs/appearance/structured-data/speakable) | `SpeakableSpecification` for voice-assistant and AI Overview citation |
+| [Schema.org – sameAs property](https://schema.org/sameAs) | `sameAs` link validation on Organization/Person for entity disambiguation (Wikipedia, Wikidata, LinkedIn, Crunchbase, X) |
 
 ### A2A Handshakes
 | Source | Purpose |
 |---|---|
-| [llmstxt.org — LLM Text Standard](https://llmstxt.org) | `llms.txt` and `llms-full.txt` specification and format |
+| [llmstxt.org — LLM Text Standard](https://llmstxt.org) | `llms.txt` and `llms-full.txt` specification, format, and structural validation (H1 title, blurb, H2 sections, markdown links) |
 | [Google A2A Protocol](https://google.github.io/A2A/) | `.well-known/agent.json` A2A discovery manifest format |
+| [RSL 1.0 — Robots Soul License](https://rsl.report) | `/.well-known/rsl.xml` machine-readable AI licensing declaration |
+| [Google Search Central — Robots meta tag](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag) | `noai`/`noimageai` meta robots and `X-Robots-Tag` AI-specific directives |
 
 ### Brand Authority
 | Source | Purpose |
@@ -160,6 +166,8 @@ Every finding in the auditor references its backing standard. The table below li
 | [W3C – Table headers](https://www.w3.org/WAI/tutorials/tables/) | `<thead>`, `<th scope>` for AI-parseable tabular data |
 | [seoClarity — AEO FAQ & Question Heading Patterns](https://www.seoclarity.net/blog/answer-engine-optimization) | FAQ sections and natural-language question headings are primary AEO snippet extraction targets; Perplexity and AI Overviews preferentially cite pages with explicit FAQ structure |
 | [ZipTie — Comparison Content AI Citation Analysis](https://ziptie.dev/research/ai-content-types) | Comparison-format tables account for ~33% of AI engine citations; consistent column headers and row structure strongly preferred |
+| [Google Search Central — Featured Snippets](https://developers.google.com/search/docs/appearance/featured-snippets) | Snippet-shape validation: lists with 5–9 items (≤12 words each), tables with ≤4 columns preferred for featured snippet extraction |
+| [W3C – Hidden content patterns](https://www.w3.org/WAI/WCAG21/Techniques/css/C7) | Hidden/collapsed content detection (`display:none`, `[hidden]`, `aria-hidden`, `details:not([open])`, `.collapse:not(.show)`) — content not visible on page load may be skipped by AI crawlers |
 
 ### Semantic Depth
 | Source | Purpose |
@@ -172,11 +180,29 @@ Every finding in the auditor references its backing standard. The table below li
 |---|---|
 | [WCAG 2.1 — SC 1.1.1 Non-text Content](https://www.w3.org/WAI/WCAG21/Understanding/non-text-content.html) | Descriptive alt-text requirements; critical for Vision-Language Model image understanding |
 | [HTML Living Standard – figure element](https://html.spec.whatwg.org/multipage/grouping-content.html#the-figure-element) | `<figure>`/`<figcaption>` for machine-readable contextual image captions |
+| [Aggarwal et al. (2023) — GEO paper, KDD 2024](https://arxiv.org/abs/2311.09735) | Text↔media co-location: images/video within 200 words of associated H2 section improve AI citation likelihood |
+| [YouTube oEmbed](https://oembed.com/) / [Vimeo oEmbed](https://developer.vimeo.com/api/oembed) | Video embed detection for YouTube, Vimeo, and Wistia players as rich media signals |
 
 ### Tone Alignment
 | Source | Purpose |
 |---|---|
 | [Google E-E-A-T — Trust & Authoritativeness](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) | Authoritative vocabulary vs weak qualifiers; AI trust score derivation |
+
+### Entity Authority
+| Source | Purpose |
+|---|---|
+| [Schema.org – sameAs property](https://schema.org/sameAs) | `sameAs` completeness audit on Organization/Person: Wikipedia, Wikidata, LinkedIn, Crunchbase, X |
+| [Wikidata — Entity linking](https://www.wikidata.org/wiki/Wikidata:Main_Page) | Wikipedia/Wikidata entity presence as authoritative knowledge-graph signal |
+| [Google Search Central — Sitelinks search box](https://developers.google.com/search/docs/appearance/structured-data/sitelinks-searchbox) | `WebSite` + `SearchAction` structured data for site-level entity recognition |
+| [Google E-E-A-T — Expertise](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) | Person/author schema quality (`jobTitle`, `knowsAbout`, `sameAs`) for AI-surfaced expertise signals |
+| [Schema.org – LocalBusiness](https://schema.org/LocalBusiness) | NAP (Name, Address, Phone) consistency and `sameAs` cross-referencing for local entity authority |
+
+### PAA Optimization
+| Source | Purpose |
+|---|---|
+| [seoClarity — AEO Content Patterns](https://www.seoclarity.net/blog/answer-engine-optimization) | People Also Ask optimization: question-phrased H2/H3 headings with 30–50 word self-contained answers as primary PAA extraction targets |
+| [Aggarwal et al. (2023) — GEO paper, KDD 2024](https://arxiv.org/abs/2311.09735) | Consecutive Q&A cluster quality (5–8 question-answer pairs ideal); question density as AEO readiness signal |
+| [Google Search Central — FAQ structured data](https://developers.google.com/search/docs/appearance/structured-data/faqpage) | FAQ-shaped content patterns that align with People Also Ask extraction heuristics |
 
 ## License
 
