@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Bot, Zap, FileText } from "lucide-react";
+import { Bot, Zap, FileText, Camera, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuditForm } from "@/components/AuditForm";
 import { MetricsGrid } from "@/components/MetricsGrid";
 import { CategorizedResults, CATEGORY_DEFS, MetricItem, CategoryGroup } from "@/components/CategorizedResults";
+import { AgentSwarmPanel } from "@/components/AgentSwarmPanel";
 import { AuditResponse } from "@/types";
 
 export default function Home() {
@@ -15,6 +16,9 @@ export default function Home() {
   const [logs, setLogs] = useState<string[]>([]);
   const [queueInfo, setQueueInfo] = useState<{ position: number, status: string } | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [screenshotInitial, setScreenshotInitial] = useState<string | null>(null);
+  const [screenshotFinal, setScreenshotFinal] = useState<string | null>(null);
+  const [screenshotsOpen, setScreenshotsOpen] = useState(false);
   // useRef (not useState) to track consumed log lines — avoids React StrictMode
   // double-invoking the updater and appending the same lines twice.
   const knownLogCountRef = useRef(0);
@@ -25,6 +29,9 @@ export default function Home() {
     setLoading(true);
     setResults(null);
     setQueueInfo(null);
+    setScreenshotInitial(null);
+    setScreenshotFinal(null);
+    setScreenshotsOpen(false);
     knownLogCountRef.current = 0;
     setLogs(["[INIT] Handshaking with server queue..."]);
     try {
@@ -65,6 +72,10 @@ export default function Home() {
 
         setQueueInfo({ position: data.position, status: data.status });
 
+        // Capture screenshots as they arrive from the job
+        if (data.screenshotInitial && !screenshotInitial) setScreenshotInitial(data.screenshotInitial);
+        if (data.screenshotFinal && !screenshotFinal) setScreenshotFinal(data.screenshotFinal);
+
         // Stream any new live log lines the server has accumulated since last poll
         const liveLogs: string[] = data.log ?? [];
         const newLines = liveLogs.slice(knownLogCountRef.current);
@@ -75,6 +86,8 @@ export default function Home() {
         
         if (data.status === 'completed') {
            setResults(data.result);
+           if (data.result?.screenshotInitial) setScreenshotInitial(data.result.screenshotInitial);
+           if (data.result?.screenshotFinal) setScreenshotFinal(data.result.screenshotFinal);
            // If live log was empty (cache hit), fall back to result log
            if (liveLogs.length === 0 && data.result?.log?.length) {
              setLogs(prev => [...prev, ...data.result.log]);
@@ -126,7 +139,8 @@ export default function Home() {
     { id: "media", label: "MEDIA_CONTEXT", data: results.media, description: "Checks if your images have descriptions (alt text) so AI can 'see' them." },
     { id: "sentiment", label: "TONE_ALIGNMENT", data: results.sentiment, description: "Ensures your tone is factual and calm, which AI engines prefer for citations." },
     { id: "entityAuthority", label: "ENTITY_AUTHORITY", data: results.entityAuthority, description: "Validates sameAs links, Wikipedia/Wikidata presence, WebSite SearchAction, and author Person schema for AI knowledge panels." },
-    { id: "paa", label: "PAA_OPTIMIZATION", data: results.paa, description: "Evaluates People Also Ask readiness: question heading clusters with 30–50 word self-contained answers." }
+    { id: "paa", label: "PAA_OPTIMIZATION", data: results.paa, description: "Evaluates People Also Ask readiness: question heading clusters with 30–50 word self-contained answers." },
+    { id: "sitemap", label: "SITEMAP_AI_READINESS", data: results.sitemap, description: "Evaluates XML sitemap quality for AI crawler optimization: discoverability, freshness signals, size, and structural best practices." }
   ] : [];
 
   // Build categorized groups from flat metrics
@@ -268,7 +282,7 @@ export default function Home() {
                        <div className="prose prose-sm max-w-none">
                           <h3 className="uppercase tracking-widest text-sm font-bold mb-4">Methodology</h3>
                           <p className="text-xs leading-relaxed text-muted">
-                             This report was generated using the Geo Agentic Auditor framework. The audit evaluates a domain across 11 technical dimensions required for high-fidelity discovery by Generative AI engines (ChatGPT, Claude, Perplexity, SearchGPT). Unlike traditional SEO, which focuses on human search behavior, this audit focuses on machine-readable context, semantic identity resolution, and authoritative citation triggers.
+                             This report was generated using the Geo Agentic Auditor framework. The audit evaluates a domain across 14 technical dimensions required for high-fidelity discovery by Generative AI engines (ChatGPT, Claude, Perplexity, SearchGPT). Unlike traditional SEO, which focuses on human search behavior, this audit focuses on machine-readable context, semantic identity resolution, and authoritative citation triggers.
                           </p>
                        </div>
                        
@@ -356,10 +370,68 @@ export default function Home() {
                  </div>
 
                  {/* Raw Logs */}
+
+                 {/* Screenshots — collapsible section */}
+                 {(screenshotInitial || screenshotFinal) && (
+                   <div className="mt-8 border border-white/5 bg-[#0D0D0D] no-print">
+                     <button
+                       onClick={() => setScreenshotsOpen(!screenshotsOpen)}
+                       className="w-full px-5 py-3 flex items-center justify-between text-left"
+                     >
+                       <div className="flex items-center gap-2">
+                         <Camera size={14} className="text-[#D4A373]" />
+                         <span className="text-[11px] uppercase tracking-[0.2em] text-white/50 font-bold">Page Screenshots</span>
+                       </div>
+                       {screenshotsOpen ? <ChevronUp size={14} className="text-white/30" /> : <ChevronDown size={14} className="text-white/30" />}
+                     </button>
+                     <AnimatePresence>
+                       {screenshotsOpen && (
+                         <motion.div
+                           initial={{ height: 0, opacity: 0 }}
+                           animate={{ height: 'auto', opacity: 1 }}
+                           exit={{ height: 0, opacity: 0 }}
+                           className="overflow-hidden"
+                         >
+                           <div className="px-5 pb-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                             {screenshotInitial && (
+                               <div>
+                                 <p className="text-[9px] uppercase tracking-widest text-white/25 mb-2">Initial Load (may show WAF/CAPTCHA)</p>
+                                 {/* eslint-disable-next-line @next/next/no-img-element */}
+                                 <img src={`data:image/png;base64,${screenshotInitial}`} alt="Initial page load" className="w-full border border-white/5 rounded-sm" />
+                               </div>
+                             )}
+                             {screenshotFinal && (
+                               <div>
+                                 <p className="text-[9px] uppercase tracking-widest text-white/25 mb-2">Audited Content (final page)</p>
+                                 {/* eslint-disable-next-line @next/next/no-img-element */}
+                                 <img src={`data:image/png;base64,${screenshotFinal}`} alt="Final audited page" className="w-full border border-white/5 rounded-sm" />
+                               </div>
+                             )}
+                           </div>
+                         </motion.div>
+                       )}
+                     </AnimatePresence>
+                   </div>
+                 )}
                  
               </motion.div>
             )}
          </AnimatePresence>
+
+         {/* Agent Swarm Monitor — rendered during and after audit */}
+         {logs.length > 0 && <AgentSwarmPanel logs={logs} />}
+
+         {/* Live screenshot preview while audit is running */}
+         {loading && screenshotInitial && !screenshotFinal && (
+           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4 no-print">
+             <div className="flex items-center gap-2 mb-2">
+               <Camera size={12} className="text-[#D4A373]" />
+               <span className="text-[10px] uppercase tracking-widest text-white/30">Live Preview — Browser Initial Capture</span>
+             </div>
+             {/* eslint-disable-next-line @next/next/no-img-element */}
+             <img src={`data:image/png;base64,${screenshotInitial}`} alt="Live page preview" className="w-full max-w-md border border-white/5 rounded-sm opacity-60" />
+           </motion.div>
+         )}
 
          {/* Extracted Raw Logs outside of results wrapper so queue logs show immediately */}
          {(logs.length > 0 || loading) && (

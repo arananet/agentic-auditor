@@ -16,6 +16,10 @@ export interface AuditResult {
   score: number;
   status: 'READY' | 'WARN' | 'FAILED' | 'SCANNING' | 'WAITING';
   details: AuditFinding[];
+  /** Oracle confidence: 'high' = trusted, 'low' = input was suspect, 'overridden' = oracle corrected the score */
+  confidence?: 'high' | 'low' | 'overridden';
+  /** Oracle flags — human-readable warnings about this agent's output */
+  oracleFlags?: string[];
 }
 
 export interface AuditResponse {
@@ -33,5 +37,10 @@ export interface AuditResponse {
   sentiment: AuditResult;
   entityAuthority: AuditResult;
   paa: AuditResult;
+  sitemap: AuditResult;
   log: string[];
+  /** Base64 PNG — first capture right after page load (may show WAF/CAPTCHA) */
+  screenshotInitial?: string;
+  /** Base64 PNG — final page the auditor actually analyzed (after WAF bypass if needed) */
+  screenshotFinal?: string;
 }
