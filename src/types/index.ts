@@ -31,5 +31,7 @@ export interface AuditResponse {
   semantic: AuditResult;
   media: AuditResult;
   sentiment: AuditResult;
+  entityAuthority: AuditResult;
+  paa: AuditResult;
   log: string[];
 }

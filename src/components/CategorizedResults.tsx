@@ -124,8 +124,8 @@ export const CATEGORY_DEFS = [
     effort: 'Editorial',
     effortColor: 'text-[#D4A373] border-[#D4A373]/30 bg-[#D4A373]/5',
     icon: <FileText size={22} />,
-    description: 'Content improvements requiring editorial and marketing collaboration: E-E-A-T metadata, content freshness, sourced statistics, expert quotes, citability patterns, conversational headings, semantic depth, keyword stuffing detection, tone alignment, image alt-text, and third-party brand authority.',
-    metricIds: ['contentQuality', 'citability', 'intentMatch', 'semantic', 'sentiment', 'brandMentions', 'media'],
+    description: 'Content improvements requiring editorial and marketing collaboration: E-E-A-T metadata, content freshness, sourced statistics, expert quotes, citability patterns, PAA optimization, conversational headings, semantic depth, keyword stuffing detection, tone alignment, image alt-text, and third-party brand authority.',
+    metricIds: ['contentQuality', 'citability', 'paa', 'intentMatch', 'semantic', 'sentiment', 'brandMentions', 'media'],
   },
   {
     id: 'structural-gaps',
@@ -133,7 +133,7 @@ export const CATEGORY_DEFS = [
     effort: 'Development',
     effortColor: 'text-[#7BA7BC] border-[#7BA7BC]/30 bg-[#7BA7BC]/5',
     icon: <Code2 size={22} />,
-    description: 'HTML and schema changes requiring frontend development: JSON-LD structured data, semantic HTML elements, table headers, FAQ sections, comparison tables, and SpeakableSpecification.',
-    metricIds: ['schema', 'structural'],
+    description: 'HTML and schema changes requiring frontend development: JSON-LD structured data, entity authority signals, semantic HTML elements, table headers, FAQ sections, comparison tables, and SpeakableSpecification.',
+    metricIds: ['schema', 'structural', 'entityAuthority'],
   },
 ] as const;

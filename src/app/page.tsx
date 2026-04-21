@@ -124,7 +124,9 @@ export default function Home() {
     { id: "structural", label: "STRUCTURAL_GEO", data: results.structural, description: "Analyzes lists, tables, FAQ sections, comparison tables, and semantic HTML for AI parsing." },
     { id: "semantic", label: "SEMANTIC_DEPTH", data: results.semantic, description: "Measures lexical diversity, content depth, and detects keyword stuffing that hurts AI visibility." },
     { id: "media", label: "MEDIA_CONTEXT", data: results.media, description: "Checks if your images have descriptions (alt text) so AI can 'see' them." },
-    { id: "sentiment", label: "TONE_ALIGNMENT", data: results.sentiment, description: "Ensures your tone is factual and calm, which AI engines prefer for citations." }
+    { id: "sentiment", label: "TONE_ALIGNMENT", data: results.sentiment, description: "Ensures your tone is factual and calm, which AI engines prefer for citations." },
+    { id: "entityAuthority", label: "ENTITY_AUTHORITY", data: results.entityAuthority, description: "Validates sameAs links, Wikipedia/Wikidata presence, WebSite SearchAction, and author Person schema for AI knowledge panels." },
+    { id: "paa", label: "PAA_OPTIMIZATION", data: results.paa, description: "Evaluates People Also Ask readiness: question heading clusters with 30–50 word self-contained answers." }
   ] : [];
 
   // Build categorized groups from flat metrics
