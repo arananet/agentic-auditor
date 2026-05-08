@@ -35,7 +35,7 @@ class QueueManager {
       throw new Error('Queue is full. Please try again later.');
     }
 
-    const id = Math.random().toString(36).substring(2, 15);
+    const id = crypto.randomUUID();
     this.jobs.set(id, {
       id,
       url,
