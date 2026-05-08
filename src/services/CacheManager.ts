@@ -1,4 +1,5 @@
 const MAX_CACHE_SIZE = 200;
+const MAX_ENTRY_BYTES = 2 * 1024 * 1024; // 2 MB per entry
 
 export class CacheManager {
   private cache = new Map<string, { data: any; expiry: number }>();
@@ -14,6 +15,9 @@ export class CacheManager {
   }
 
   set(key: string, data: any, ttlSeconds: number = 3600): void {
+    // Reject entries that would consume excessive memory (large HTML + base64 screenshots)
+    if (JSON.stringify(data).length > MAX_ENTRY_BYTES) return;
+
     // Evict expired entries first, then oldest if still over limit
     if (this.cache.size >= MAX_CACHE_SIZE) {
       const now = Date.now();

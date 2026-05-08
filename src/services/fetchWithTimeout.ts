@@ -1,4 +1,52 @@
 import { chromium, Browser } from 'playwright';
+import dns from 'dns/promises';
+import net from 'net';
+
+// Returns true if the IP is private, loopback, link-local, or a cloud-metadata address
+function isPrivateIp(ip: string): boolean {
+  if (net.isIPv4(ip)) {
+    const [a, b] = ip.split('.').map(Number);
+    return (
+      a === 127 ||
+      a === 10 ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 169 && b === 254) ||
+      a === 0 ||
+      (a === 100 && b >= 64 && b <= 127)
+    );
+  }
+  if (net.isIPv6(ip)) {
+    const lower = ip.toLowerCase();
+    return (
+      lower === '::1' ||
+      lower === '::' ||
+      lower.startsWith('fc') ||
+      lower.startsWith('fd') ||
+      /^fe[89ab][0-9a-f]/i.test(lower) ||
+      lower.startsWith('::ffff:')
+    );
+  }
+  return false;
+}
+
+// Resolves a hostname and checks every returned address against the private-IP blocklist.
+// Re-validates on every call (no caching) to defeat DNS rebinding attacks.
+async function isSafeNavigationTarget(url: string): Promise<boolean> {
+  try {
+    const { hostname } = new URL(url);
+    const bare = hostname.startsWith('[') && hostname.endsWith(']')
+      ? hostname.slice(1, -1)
+      : hostname;
+    // Reject private IP literals outright
+    if (net.isIP(bare)) return !isPrivateIp(bare);
+    // DNS resolve — block if any address is private or resolution fails
+    const results = await dns.lookup(bare, { all: true });
+    return results.length > 0 && results.every(r => !isPrivateIp(r.address));
+  } catch {
+    return false;
+  }
+}
 
 // Callback type for progress messages during WAF solving
 type WafProgressFn = (msg: string) => void;
@@ -133,6 +181,15 @@ export async function solveWafChallenge(
 
     const page = await context.newPage();
     await page.addInitScript(STEALTH_INIT_SCRIPT);
+
+    // Block redirects (and any navigation) that resolve to private/cloud-metadata IPs
+    await page.route(/^https?:\/\//, async (route) => {
+      if (route.request().resourceType() === 'document') {
+        const allowed = await isSafeNavigationTarget(route.request().url()).catch(() => false);
+        if (!allowed) { route.abort('blockedbyclient'); return; }
+      }
+      route.continue();
+    });
 
     // ── Cloudflare-specific: intercept Turnstile requests and fake Origin/Referer ──
     if (vendor.startsWith('cloudflare')) {
@@ -296,6 +353,16 @@ export async function fetchWithTimeout(url: string, timeoutMs: number = 45000): 
     // Patch common bot-detection signals (Imperva, Cloudflare, Akamai)
     await page.addInitScript(STEALTH_INIT_SCRIPT);
 
+    // Block any navigation (including redirect targets) that resolves to a private IP.
+    // Re-validates DNS on every document request to defeat DNS rebinding.
+    await page.route(/^https?:\/\//, async (route) => {
+      if (route.request().resourceType() === 'document') {
+        const allowed = await isSafeNavigationTarget(route.request().url()).catch(() => false);
+        if (!allowed) { route.abort('blockedbyclient'); return; }
+      }
+      route.continue();
+    });
+
     page.setDefaultTimeout(timeoutMs);
 
     // Navigate — try domcontentloaded first (faster), then wait for network
@@ -356,20 +423,38 @@ export async function fetchWithTimeout(url: string, timeoutMs: number = 45000): 
 /**
  * Simple fetch for plain text files (llms.txt, robots.txt, agent.json).
  * No JS rendering needed — avoids wasting browser resources.
+ *
+ * Uses manual redirect following so every hop is validated against the SSRF
+ * blocklist before the request is made.
  */
 export async function fetchTextFile(url: string, timeoutMs: number = 10000): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (compatible; GEO-Auditor/1.0)',
+    'Accept': 'text/plain, application/json, */*',
+  };
   try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; GEO-Auditor/1.0)',
-        'Accept': 'text/plain, application/json, */*',
-      },
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.text();
+    let currentUrl = url;
+    for (let hops = 0; hops < 5; hops++) {
+      if (!await isSafeNavigationTarget(currentUrl)) {
+        throw new Error('URL blocked: resolves to a private or reserved address');
+      }
+      const res = await fetch(currentUrl, {
+        signal: controller.signal,
+        redirect: 'manual',
+        headers: HEADERS,
+      });
+      if (res.status >= 300 && res.status < 400) {
+        const location = res.headers.get('location');
+        if (!location) throw new Error('Redirect with no Location header');
+        currentUrl = new URL(location, currentUrl).toString();
+        continue;
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.text();
+    }
+    throw new Error('Too many redirects');
   } finally {
     clearTimeout(timer);
   }
