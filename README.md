@@ -111,6 +111,7 @@ Every finding in the auditor references its backing standard. The table below li
 ### Technical Readiness
 | Source | Purpose |
 |---|---|
+| [Google — AI Optimization Guide](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide) | Official Google guidance: ensure content is crawlable, use semantic HTML, follow JavaScript SEO best practices; robots.txt Googlebot directives remain the primary crawl control for Google AI features |
 | [RFC 9309 — Robots Exclusion Protocol](https://www.rfc-editor.org/rfc/rfc9309) | Industry standard for per-bot `robots.txt` directives |
 | [OpenAI — Crawler documentation](https://developers.openai.com/api/docs/bots) | `GPTBot` (training), `OAI-SearchBot` (ChatGPT search), `ChatGPT-User` (user browsing) |
 | [Anthropic — Claude crawler documentation](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-the-web-and-how-can-site-owners-block-the-crawler) | `ClaudeBot` (training), `Claude-SearchBot` (search quality), `Claude-User` (user browsing) |
@@ -127,6 +128,7 @@ Every finding in the auditor references its backing standard. The table below li
 ### Schema Depth
 | Source | Purpose |
 |---|---|
+| [Google — AI Optimization Guide](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide) | Google notes that no special schema.org markup is required specifically for AI features; structured data remains recommended for overall SEO and Rich Result eligibility |
 | [Google Search Central — Structured data overview](https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data) | JSON-LD implementation and Rich Result eligibility |
 | [Schema.org](https://schema.org) | Vocabulary definitions for Organization, FAQPage, Article, Product, BreadcrumbList, QAPage, DefinedTerm, ClaimReview, Course, JobPosting, etc. |
 | [Google – Speakable structured data](https://developers.google.com/search/docs/appearance/structured-data/speakable) | `SpeakableSpecification` for voice-assistant and AI Overview citation |
@@ -135,6 +137,7 @@ Every finding in the auditor references its backing standard. The table below li
 ### A2A Handshakes
 | Source | Purpose |
 |---|---|
+| [Google — AI Optimization Guide](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide) | Google explicitly states that `llms.txt`, AI-specific markup, and new machine-readable files are **not required** to appear in Google's generative AI features; this metric targets readiness for non-Google AI agents, RAG pipelines, and LLM crawlers |
 | [llmstxt.org — LLM Text Standard](https://llmstxt.org) | `llms.txt` and `llms-full.txt` specification, format, and structural validation (H1 title, blurb, H2 sections, markdown links) |
 | [Google A2A Protocol](https://google.github.io/A2A/) | `.well-known/agent.json` A2A discovery manifest format |
 | [RSL 1.0 — Robots Soul License](https://rsl.report) | `/.well-known/rsl.xml` machine-readable AI licensing declaration |
@@ -151,6 +154,7 @@ Every finding in the auditor references its backing standard. The table below li
 ### Content E-E-A-T
 | Source | Purpose |
 |---|---|
+| [Google — AI Optimization Guide](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide) | Creating content that people find unique, compelling, and useful is cited as the highest-impact factor for AI feature visibility; write for human audiences with clear paragraph/section structure and descriptive headings |
 | [Google E-E-A-T — Expertise & Authoritativeness](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) | Authorship metadata, freshness dating, content depth |
 | [Google Search Quality Rater Guidelines](https://static.googleusercontent.com/media/guidelines.raterhub.com/en//searchqualityevaluatorguidelines.pdf) | Thin content thresholds (< 1,000 words) |
 | [Google Search Central – Meta descriptions](https://developers.google.com/search/docs/appearance/snippet#meta-descriptions) | Meta description quality for summary and snippet generation |
