@@ -9,12 +9,14 @@ const RATE_LIMIT_MAX = 10;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 
 // Purge expired entries every 5 minutes to prevent unbounded memory growth
-setInterval(() => {
+const _purgeTimer = setInterval(() => {
   const now = Date.now();
   for (const [ip, entry] of rateLimitMap.entries()) {
     if (now > entry.resetAt) rateLimitMap.delete(ip);
   }
-}, 5 * 60_000).unref();
+}, 5 * 60_000);
+// Allow Node.js process to exit even if this timer is still pending
+(_purgeTimer as unknown as { unref?: () => void }).unref?.();
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
