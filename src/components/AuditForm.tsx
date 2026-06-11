@@ -28,7 +28,7 @@ export const AuditForm = ({ url, loading, queueStatus, queuePosition, onUrlChang
         widgetId.current = null;
       }
       widgetId.current = window.turnstile.render(turnstileRef.current, {
-        sitekey: "0x4AAAAAACo07B70a2WlqXNQ",
+        sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "0x4AAAAAACo07B70a2WlqXNQ",
         theme: "dark",
         callback: (receivedToken: string) => {
           setToken(receivedToken);

@@ -112,12 +112,8 @@ export async function POST(req: Request) {
     }
     if (!token) return NextResponse.json({ error: 'Security token required' }, { status: 403 });
 
+    // Cheap static validation first (no network).
     if (!isValidAuditUrl(url)) {
-      return NextResponse.json({ error: 'Invalid URL. Only public http/https URLs are allowed.' }, { status: 400 });
-    }
-
-    // DNS validation — catches URLs that resolve to private/cloud-metadata IPs
-    if (!await dnsValidateUrl(url)) {
       return NextResponse.json({ error: 'Invalid URL. Only public http/https URLs are allowed.' }, { status: 400 });
     }
 
@@ -149,6 +145,13 @@ export async function POST(req: Request) {
         error: 'Security verification failed.',
         details: outcome['error-codes']
       }, { status: 403 });
+    }
+
+    // DNS validation runs only after rate-limit + Turnstile so unauthenticated
+    // callers can't use this endpoint to drive arbitrary outbound DNS lookups.
+    // Catches URLs that resolve to private/cloud-metadata IPs.
+    if (!await dnsValidateUrl(url)) {
+      return NextResponse.json({ error: 'Invalid URL. Only public http/https URLs are allowed.' }, { status: 400 });
     }
 
     let jobId: string;

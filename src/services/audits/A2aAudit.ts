@@ -1,7 +1,7 @@
 import { IAuditStrategy, AuditContext } from './IAuditStrategy';
 import { AuditResult } from '../../types';
 import { LlmAnalyzer } from '../LlmAnalyzer';
-import { fetchTextFile } from '../fetchWithTimeout';
+import { fetchTextFile, safeFetch } from '../fetchWithTimeout';
 
 export class A2aAudit implements IAuditStrategy {
   name = 'a2a';
@@ -92,17 +92,15 @@ export class A2aAudit implements IAuditStrategy {
     // Also check for explicit AI opt-in/opt-out in individual meta tags
     const hasAiMetaTag = $ ? ($('meta[name="robots"][content*="noai"], meta[name="robots"][content*="noimageai"]').length > 0) : false;
 
-    // 6. X-Robots-Tag AI-specific headers (check via HEAD request)
+    // 6. X-Robots-Tag AI-specific headers (check via HEAD request).
+    // Routed through safeFetch so redirects are SSRF-validated — a raw fetch here
+    // would follow a redirect to an internal/cloud-metadata host unchecked.
     let xRobotsTagAi = '';
     try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 5000);
-      const headRes = await fetch(baseUrl, {
+      const headRes = await safeFetch(baseUrl, {
         method: 'HEAD',
-        signal: controller.signal,
         headers: { 'User-Agent': 'Mozilla/5.0 (compatible; GEO-Auditor/1.0)' },
-      });
-      clearTimeout(timer);
+      }, 5000);
       const xRobots = headRes.headers.get('x-robots-tag') || '';
       if (/\b(noai|noimageai)\b/i.test(xRobots)) {
         xRobotsTagAi = xRobots;

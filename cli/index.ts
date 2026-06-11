@@ -11,7 +11,7 @@
  *   npx tsx cli/index.ts --urls-file ./urls.txt --output ./reports --format both
  *
  * Environment variables (optional, same as web app):
- *   CF_AI_ACCOUNT_ID, CF_AI_API_TOKEN   → enables deep LLM analysis via Cloudflare Workers AI
+ *   CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN   → enables deep LLM analysis via Cloudflare Workers AI
  *
  * Output files:
  *   <output>/<hostname>_<timestamp>.md
