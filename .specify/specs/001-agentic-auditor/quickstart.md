@@ -4,12 +4,12 @@
 1. `npm install`
 2. Copy `.env.example` to `.env.local` and fill in:
    - `TURNSTILE_SECRET_KEY` — Cloudflare Turnstile secret key
-   - `CF_AI_ACCOUNT_ID` — Cloudflare account ID for Workers AI
-   - `CF_AI_API_TOKEN` — Cloudflare API token with Workers AI permissions
+   - `CLOUDFLARE_ACCOUNT_ID` — Cloudflare account ID for Workers AI
+   - `CLOUDFLARE_API_TOKEN` — Cloudflare API token with Workers AI permissions
 3. Install Playwright browsers: `npx playwright install chromium`
 4. `npm run dev` — starts on http://localhost:3000
 
-> **Note:** The app uses the Cloudflare Workers AI **Free Tier** (10,000 neurons/day). LLM-accelerated analysis (Sentiment, Intent) will fall back to heuristics once the daily quota is reached.
+> **Note:** The app uses the Cloudflare Workers AI **Free Tier** (10,000 neurons/day). LLM-accelerated analysis falls back to heuristics once the daily quota is reached.
 
 ## CLI Batch Auditor
 ```bash

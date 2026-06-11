@@ -15,12 +15,17 @@
 
 ### `AuditResult`
 - `score`: number (0–100)
-- `status`: `'READY'` | `'WARN'` | `'FAILED'`
+- `status`: `'READY'` | `'WARN'` | `'FAILED'` | `'SCANNING'` | `'WAITING'`
 - `details`: AuditFinding[]
+- `confidence?`: `'high'` | `'low'` | `'overridden'` — Oracle Validator confidence
+- `oracleFlags?`: string[] — Oracle cross-validation warnings
 
 ### `AuditResponse`
+15 audit dimensions, each an `AuditResult`:
 - `overallScore`: number
 - `log`: string[] — live execution log lines
+- `screenshotInitial?`: string — base64 PNG, first capture after page load
+- `screenshotFinal?`: string — base64 PNG, final audited page
 - `citability`: AuditResult
 - `technical`: AuditResult
 - `schema`: AuditResult
@@ -32,6 +37,10 @@
 - `semantic`: AuditResult
 - `media`: AuditResult
 - `sentiment`: AuditResult
+- `entityAuthority`: AuditResult
+- `paa`: AuditResult
+- `sitemap`: AuditResult
+- `commerceAgent`: AuditResult — agentic commerce readiness (ACP, AP2, MCP, UCP + Product/Offer substrate)
 
 ### `Job` (QueueManager)
 - `id`: string (UUID)
@@ -51,10 +60,10 @@
 - `description`: string — short human-readable description shown in the UI
 
 ### `CategoryDef`
-- `id`: string — category identifier (`"agent-access"` | `"content-signals"` | `"structural-gaps"`)
+- `id`: string — category identifier (`"agent-access"` | `"content-signals"` | `"structural-gaps"` | `"agentic-commerce"`)
 - `title`: string — display title
 - `description`: string
-- `effort`: string — effort badge label (`"Quick Win"` | `"Editorial"` | `"Development"`)
+- `effort`: string — effort badge label (`"Quick Win"` | `"Editorial"` | `"Development"` | `"Platform"`)
 - `effortColor`: string — Tailwind color class
 - `icon`: React element
 - `metricIds`: string[] — ordered list of metric IDs belonging to this category
@@ -64,7 +73,8 @@ Extends `CategoryDef` with:
 - `metrics`: MetricItem[] — resolved metric items for this category
 
 ### `CATEGORY_DEFS` constant
-Three predefined `CategoryDef` entries:
-- `agent-access` → Technical + A2A → effort: **Quick Win** (green)
-- `content-signals` → Citability, ContentQuality, IntentMatch, Semantic, Sentiment, BrandMentions, Media → effort: **Editorial** (amber)
-- `structural-gaps` → Schema + Structural → effort: **Development** (blue)
+Four predefined `CategoryDef` entries:
+- `agent-access` → Technical, A2A (llmstxt), Sitemap → effort: **Quick Win** (green)
+- `content-signals` → ContentQuality, Citability, PAA, IntentMatch, Semantic, Sentiment, BrandMentions, Media → effort: **Editorial** (amber)
+- `structural-gaps` → Schema, Structural, EntityAuthority → effort: **Development** (blue)
+- `agentic-commerce` → CommerceAgent (ACP / AP2 / MCP / UCP) → effort: **Platform** (violet)

@@ -1,7 +1,7 @@
 # 🎯 Geo Agentic Auditor - Specification
 
 ## Core Requirements
-Develop a fast, headless-browser-powered, continuous heuristic and LLM-accelerated auditing tool designed specifically to evaluate website readiness for Generative Engine Optimization (GEO) and Answer Engine Optimization (AEO). Results are grouped into three effort tiers for actionable prioritisation.
+Develop a fast, headless-browser-powered, continuous heuristic and LLM-accelerated auditing tool designed specifically to evaluate website readiness for Generative Engine Optimization (GEO), Answer Engine Optimization (AEO), and Agentic Commerce. Results are grouped into four effort tiers for actionable prioritisation.
 
 ## Features
 - **Deterministic Heuristics:** The system must use Cheerio to parse DOM elements (lists, tables, schema, meta tags) to generate continuous density scores rather than binary outcomes.
@@ -14,7 +14,8 @@ Develop a fast, headless-browser-powered, continuous heuristic and LLM-accelerat
 - **Bot Protection:** Cloudflare Turnstile verification on both frontend and backend prevents abuse.
 - **SSRF Protection:** Backend validates that submitted URLs are public `http(s)://` URLs, blocking localhost, RFC-1918 ranges, and cloud metadata endpoints.
 - **LRU Cache:** `CacheManager` caps at 200 entries, evicting expired entries first then oldest-first.
-- **Categorized Results UI:** `CategorizedResults` component groups the 11 metrics into three effort tiers with animated header cards — **Quick Win** (Technical, A2A), **Editorial** (Citability, Brand, ContentQuality, IntentMatch, Semantic, Sentiment, Media), **Development** (Schema, Structural).
+- **Categorized Results UI:** `CategorizedResults` component groups the 15 metrics into four effort tiers with animated header cards — **Quick Win** (Technical, A2A, Sitemap), **Editorial** (ContentQuality, Citability, PAA, IntentMatch, Semantic, Sentiment, Brand, Media), **Development** (Schema, Structural, EntityAuthority), **Platform** (CommerceAgent).
+- **Agentic Commerce Readiness:** Probes the 2026 agent-transaction stacks — ACP (OpenAI/Stripe), AP2 (Google), MCP server cards (`/.well-known/mcp.json`), and UCP capability profiles — and validates the transactable Product/Offer JSON-LD substrate (price + ISO-4217 currency, availability, GTIN/MPN/SKU, return/shipping policy, ratings) they depend on. All discovery probes use the SSRF-safe `fetchTextFile()` path.
 
 ## Audit Signal Inventory (current)
 
@@ -52,6 +53,14 @@ Develop a fast, headless-browser-powered, continuous heuristic and LLM-accelerat
 - `thirdPartyReviewDomains` = [g2.com, capterra.com, trustradius.com, trustpilot.com, quora.com, medium.com, producthunt.com, yelp.com, bbb.org, sitejabber.com] — `reviewBonus = min(5, reviewLinks×3)`
 - `socialScore = min(30, totalSocialProof×6)` (was 40)
 - About/Contact/Trust page detection (language-aware: EN/PT/ES/FR/DE/IT)
+
+### Agentic Commerce Readiness
+- **MCP** server card probe — `/.well-known/mcp.json` (SEP-1649); advertised tool/capability count
+- **AP2** A2A AgentCard probe — `/.well-known/agent-card.json` → `agent.json` fallback; payment capability detection (`ap2`/`payment`/`mandate`/`cart`/`checkout`/`x402`)
+- **UCP** capability profile probe — `/.well-known/ucp.json` (REST/JSON-RPC, built on AP2/A2A/MCP)
+- **ACP** discovery manifest probe — `/.well-known/agentic-commerce.json` (feed is otherwise pushed to the platform)
+- **Transactable Product/Offer substrate** (JSON-LD, max 40 pts): `price` + `priceCurrency` (ISO 4217), `availability`, identifier (`gtin`/`mpn`/`sku`/`productID`), `hasMerchantReturnPolicy`/`shippingDetails`, `aggregateRating`/`review`
+- All discovery probes go through the SSRF-safe `fetchTextFile()`; runs as an infrastructure audit even on WAF-blocked pages
 
 ## Technical Stack
 - Next.js 14 (Route Handlers, Server Components)
