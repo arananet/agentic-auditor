@@ -1,18 +1,23 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { AuditResult } from "@/types";
 import { motion } from "framer-motion";
 
 interface Props {
-  metrics: { id: string; label: string; data: AuditResult; description: string }[];
+  metrics: { id: string; label: string; data: AuditResult; description: string; dimension?: string }[];
+  /** The audited URL — attached to any feedback submitted from a card. */
+  url?: string;
 }
 
 type TooltipKey = `${number}-${number}`;
 
-export const MetricsGrid = ({ metrics }: Props) => {
+export const MetricsGrid = ({ metrics, url }: Props) => {
   const [activeTooltip, setActiveTooltip] = useState<TooltipKey | null>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Tracks which dimensions the user has already rated this session.
+  const [sentFeedback, setSentFeedback] = useState<Record<string, 'agree' | 'disagree'>>({});
 
   const showTooltip = (key: TooltipKey) => {
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
@@ -21,6 +26,19 @@ export const MetricsGrid = ({ metrics }: Props) => {
 
   const scheduleHide = () => {
     hideTimerRef.current = setTimeout(() => setActiveTooltip(null), 350);
+  };
+
+  const submitFeedback = async (dimension: string, signal: 'agree' | 'disagree') => {
+    if (sentFeedback[dimension]) return;
+    setSentFeedback(prev => ({ ...prev, [dimension]: signal }));
+    try {
+      await fetch('/api/feedback', {
+        method: 'POST',
+        body: JSON.stringify({ dimension, signal, url }),
+      });
+    } catch {
+      // Best-effort — optimistic UI already updated; ignore network errors.
+    }
   };
 
   return (
@@ -114,6 +132,42 @@ export const MetricsGrid = ({ metrics }: Props) => {
                   );
                 })}
               </ul>
+            </div>
+          )}
+
+          {/* Feedback — trains the Agent Memory Layer's Oracle calibration */}
+          {(m.dimension || m.id) && (
+            <div className="pt-4 mt-4 border-t border-white/10 flex items-center justify-between">
+              {(() => {
+                const dim = m.dimension || m.id;
+                const sent = sentFeedback[dim];
+                if (sent) {
+                  return <span className="text-[9px] text-white/40 uppercase tracking-widest">Thanks — feedback recorded</span>;
+                }
+                return (
+                  <>
+                    <span className="text-[9px] text-white/30 uppercase tracking-widest">Was this accurate?</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        aria-label="Agree with this assessment"
+                        onClick={() => submitFeedback(dim, 'agree')}
+                        className="text-white/30 hover:text-[#8FBC8F] transition-colors"
+                      >
+                        <ThumbsUp size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Disagree with this assessment"
+                        onClick={() => submitFeedback(dim, 'disagree')}
+                        className="text-white/30 hover:text-red-400 transition-colors"
+                      >
+                        <ThumbsDown size={13} />
+                      </button>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           )}
         </div>

@@ -15,13 +15,47 @@ import { AuditResult, AuditResponse } from '../types';
 //   • oracleFlags[]: human-readable warnings
 // ---------------------------------------------------------------------------
 
-type AuditKey = keyof Omit<AuditResponse, 'overallScore' | 'log' | 'screenshotInitial' | 'screenshotFinal'>;
+type AuditKey = keyof Omit<AuditResponse, 'overallScore' | 'log' | 'screenshotInitial' | 'screenshotFinal' | 'memory'>;
 
 interface OracleContext {
   botBlocked: boolean;
   htmlBytes: number;
   wordCount: number;
 }
+
+// ---------------------------------------------------------------------------
+// Versioned ruleset — see .specify/specs/002-agent-memory. The thresholds below
+// were previously hardcoded inline; extracting them lets the Agent Memory Layer
+// (Phase 2) emit calibrated rulesets without silently changing v1 behaviour.
+// A given audit pins its rulesetVersion, so scoring stays reproducible.
+// ---------------------------------------------------------------------------
+export const ORACLE_RULESET_VERSION = 'oracle-1.0.0';
+
+export interface OracleParams {
+  version: string;
+  /** Score above which an agent on a blocked page is "suspiciously high". */
+  blockedHighScore: number;
+  /** Word count below which content is "thin". */
+  thinContentWords: number;
+  /** entityAuthority score above this with schema==0 → override to 0. */
+  entitySchemaMinScore: number;
+  /** paa score above this with intentMatch==0 → override to 0. */
+  paaIntentMinScore: number;
+  /** media score at/above this with 0 images → vacuous-truth flag. */
+  mediaVacuousMinScore: number;
+  /** citability score above this on thin content → low confidence. */
+  citabilityThinMaxScore: number;
+}
+
+export const DEFAULT_ORACLE_PARAMS: OracleParams = {
+  version: ORACLE_RULESET_VERSION,
+  blockedHighScore: 60,
+  thinContentWords: 100,
+  entitySchemaMinScore: 30,
+  paaIntentMinScore: 20,
+  mediaVacuousMinScore: 80,
+  citabilityThinMaxScore: 40,
+};
 
 interface OracleVerdict {
   key: AuditKey;
@@ -33,14 +67,15 @@ interface OracleVerdict {
 export function runOracle(
   results: Partial<AuditResponse>,
   ctx: OracleContext,
-  emit: (msg: string) => void
+  emit: (msg: string) => void,
+  params: OracleParams = DEFAULT_ORACLE_PARAMS
 ): OracleVerdict[] {
   const verdicts: OracleVerdict[] = [];
 
   const get = (key: AuditKey): AuditResult | undefined =>
     results[key] as AuditResult | undefined;
 
-  emit(`[ORACLE] ━━━ Post-Execution Governance ━━━`);
+  emit(`[ORACLE] ━━━ Post-Execution Governance (ruleset ${params.version}) ━━━`);
 
   // ── Rule 1: Bot-blocked page degrades ALL agent confidence ────────────
   if (ctx.botBlocked) {
@@ -54,8 +89,8 @@ export function runOracle(
 
       const flags: string[] = ['Input degraded: WAF/bot-block page detected — agent analyzed a challenge page, not real content.'];
 
-      // If an agent scored > 60 on a blocked page, that's especially suspect
-      if (res.score > 60) {
+      // If an agent scored high on a blocked page, that's especially suspect
+      if (res.score > params.blockedHighScore) {
         flags.push(`Suspiciously high score (${res.score}) on a blocked page — likely evaluating WAF HTML, not site content.`);
       }
 
@@ -66,7 +101,7 @@ export function runOracle(
   }
 
   // ── Rule 2: Thin content cross-check ──────────────────────────────────
-  if (ctx.wordCount < 100) {
+  if (ctx.wordCount < params.thinContentWords) {
     const contentDependentAgents: AuditKey[] = [
       'citability', 'semantic', 'intentMatch', 'sentiment', 'paa', 'contentQuality'
     ];
@@ -91,7 +126,7 @@ export function runOracle(
   const schema = get('schema');
   const entity = get('entityAuthority');
   if (schema && entity) {
-    if (schema.score === 0 && entity.score > 30) {
+    if (schema.score === 0 && entity.score > params.entitySchemaMinScore) {
       const flag = 'Contradiction: entityAuthority scored >30 but schema found 0 JSON-LD blocks — sameAs/WebSite data cannot exist without JSON-LD.';
       const existing = verdicts.find(v => v.key === 'entityAuthority');
       if (existing) {
@@ -110,7 +145,7 @@ export function runOracle(
   const intent = get('intentMatch');
   if (paa && intent) {
     // If intentMatch found 0 question headings but PAA scored > 0, that's contradictory
-    if (intent.score === 0 && paa.score > 20) {
+    if (intent.score === 0 && paa.score > params.paaIntentMinScore) {
       const flag = 'Contradiction: paa scored >20 but intentMatch found 0 question headings — PAA requires question-style H2/H3.';
       const existing = verdicts.find(v => v.key === 'paa');
       if (existing) {
@@ -126,7 +161,7 @@ export function runOracle(
 
   // ── Rule 5: Media agent scoring high with 0 images ────────────────────
   const media = get('media');
-  if (media && media.score >= 80) {
+  if (media && media.score >= params.mediaVacuousMinScore) {
     const noImages = media.details.some(d => d.message.includes('No images found'));
     if (noImages) {
       const flag = 'Anomaly: media scored ≥80 but found 0 images — high score is a vacuous truth (no images = no violations). Score is technically correct but misleading.';
@@ -157,7 +192,7 @@ export function runOracle(
   const contentQuality = get('contentQuality');
   if (citability && contentQuality) {
     const thinContent = contentQuality.details.some(d => d.message.toLowerCase().includes('thin content'));
-    if (thinContent && citability.score > 40) {
+    if (thinContent && citability.score > params.citabilityThinMaxScore) {
       const flag = 'Anomaly: citability scored >40 but contentQuality flagged thin content — insufficient text makes high citability unlikely.';
       const existing = verdicts.find(v => v.key === 'citability');
       if (existing) {

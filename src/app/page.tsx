@@ -130,7 +130,7 @@ export default function Home() {
     { id: "citability", label: "CITABILITY", data: results.citability, description: "Checks sourced statistics, expert quotes, definition blocks, and 40-60 word snippet passages for AI citation." },
     { id: "schema", label: "SEMANTIC_SCHEMA", data: results.schema, description: "Validates 'Identity Data' (JSON-LD) to ensure AI knows who your brand is." },
     { id: "technical", label: "TECHNICAL", data: results.technical, description: "Checks if your site code is fast and readable for AI crawlers." },
-    { id: "llmstxt", label: "LLMS_TXT_PROTOCOL", data: results.a2a, description: "Verifies your 'AI Handshake' file (llms.txt) for direct agent ingestion." },
+    { id: "llmstxt", label: "LLMS_TXT_PROTOCOL", data: results.a2a, dimension: "a2a", description: "Verifies your 'AI Handshake' file (llms.txt) for direct agent ingestion." },
     { id: "brandMentions", label: "BRAND_AUTHORITY", data: results.brandMentions, description: "Analyzes external links to Wikipedia, Reddit, YouTube, review platforms, and social media for brand authority." },
     { id: "contentQuality", label: "CONTENT_EEAT", data: results.contentQuality, description: "Scans for author attribution, publish dates, content freshness recency, and visible 'Last updated' signals." },
     { id: "intentMatch", label: "INTENT_MATCH", data: results.intentMatch, description: "Checks if your headings use questions like 'How' or 'What' to match user prompts." },
@@ -255,7 +255,7 @@ export default function Home() {
                    </button>
                  </div>
                  
-                 <CategorizedResults categories={categoryGroups} />
+                 <CategorizedResults categories={categoryGroups} url={url} />
 
                  {/* PRINT ONLY: DETAILED TECHNICAL REPORT */}
                  <div className="print-only">
@@ -354,6 +354,21 @@ export default function Home() {
                       <p className="text-sm text-white/60 max-w-2xl leading-relaxed">
                         This composite score represents your domain's total compatibility with Generative AI engines. Download the Technical PDF for a detailed breakdown of findings and fix instructions.
                       </p>
+                      {results.memory?.diff && results.memory.diff.overallDelta !== null && (
+                        <div className="mt-4 flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-widest">
+                          <span className={`inline-flex items-center gap-1.5 font-bold ${results.memory.diff.overallDelta > 0 ? 'text-[#8FBC8F]' : results.memory.diff.overallDelta < 0 ? 'text-red-400' : 'text-white/40'}`}>
+                            {results.memory.diff.overallDelta > 0 ? '▲' : results.memory.diff.overallDelta < 0 ? '▼' : '■'}
+                            {results.memory.diff.overallDelta >= 0 ? '+' : ''}{results.memory.diff.overallDelta} pts vs last audit
+                          </span>
+                          <span className="text-white/30">{results.memory.diff.ageDays}d ago · run #{results.memory.auditCount}</span>
+                          {results.memory.diff.improved.length > 0 && (
+                            <span className="text-[#8FBC8F]/70">↑ {results.memory.diff.improved.length} improved</span>
+                          )}
+                          {results.memory.diff.regressed.length > 0 && (
+                            <span className="text-red-400/70">↓ {results.memory.diff.regressed.length} regressed</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     
                     <div className="flex items-center gap-6">

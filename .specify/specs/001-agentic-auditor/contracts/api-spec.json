@@ -89,6 +89,47 @@
           "404": { "description": "Job not found or expired" }
         }
       }
+    },
+    "/api/feedback": {
+      "post": {
+        "summary": "Capture per-finding feedback (Agent Memory Layer)",
+        "description": "Stores an anonymous agree/disagree reaction to a single audit dimension. Feeds Phase-2 Oracle calibration. Rate-limited to 30/min per IP.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dimension": { "type": "string", "description": "Audit dimension key (one of AUDIT_DIMENSIONS)" },
+                  "signal": { "type": "string", "enum": ["agree", "disagree"] },
+                  "url": { "type": "string", "description": "Optional audited URL the feedback refers to" },
+                  "note": { "type": "string", "description": "Optional free-text note (truncated to 500 chars)" }
+                },
+                "required": ["dimension", "signal"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Feedback recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "id": { "type": "string", "description": "Feedback record UUID" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid dimension or signal" },
+          "429": { "description": "Rate limit exceeded (30 req/min per IP)" }
+        }
+      }
     }
   },
   "components": {

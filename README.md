@@ -7,7 +7,8 @@ Geo Agentic Auditor is a deterministic, heuristics-based, and LLM-accelerated Ge
 - **Heuristic + Semantic Scanning**: Employs continuous density scoring and structural parsing to mimic how search engines (GPTBot, ClaudeBot, Perplexity) see the web.
 - **Agent Swarm Architecture**: 15 audit agents execute in parallel with a real-time Gantt chart showing execution timelines, peak concurrency, and per-agent durations.
 - **Agentic Commerce Readiness**: Evaluates whether AI agents can *transact* with a site — discovery probes for ACP (OpenAI/Stripe), AP2 (Google), MCP server cards, and UCP capability profiles, plus validation of the transactable Product/Offer structured data all four protocols depend on.
-- **Oracle Governance Layer**: Post-execution cross-validation of all agent outputs — detects contradictions, anomalies, bot-block degradation, and thin-content artifacts. Annotates results with confidence levels and can override scores.
+- **Oracle Governance Layer**: Post-execution cross-validation of all agent outputs — detects contradictions, anomalies, bot-block degradation, and thin-content artifacts. Annotates results with confidence levels and can override scores. Runs under a **versioned ruleset** (`oracle-1.0.0`) so scoring stays reproducible.
+- **Agent Memory Layer**: A durable longitudinal store remembers every audit's per-dimension scores and **diffs each run against the previous one** for the same URL (overall delta, improved/regressed dimensions), surfaced as a trend badge and `[MEMORY]` log lines. A `POST /api/feedback` endpoint captures per-finding 👍/👎 reactions that will calibrate the Oracle ruleset over time. Stores derived scores only (never HTML/screenshots); degrades to in-memory if no durable path is available. See [`.specify/specs/002-agent-memory`](.specify/specs/002-agent-memory/spec.md).
 - **WAF Detection & Solving**: Automatically identifies Cloudflare, Imperva, Datadome, and Akamai challenges. Attempts bypass via headless=new stealth browser; falls back to partial infrastructure-only audit if unsolvable.
 - **Dual Screenshot Capture**: Captures initial page load (may show WAF/CAPTCHA) and final audited content screenshots, displayed in a collapsible panel.
 - **Playwright Rendering**: Uses a headless Chromium singleton to render fully JavaScript-driven websites before analysis, with stealth patches for bot detection evasion.
@@ -50,6 +51,10 @@ TURNSTILE_SECRET_KEY=your_secret_key_here
 # Free Tier = 10,000 neurons/day (shared across all LLM-accelerated audits)
 CLOUDFLARE_ACCOUNT_ID=your_account_id_here
 CLOUDFLARE_API_TOKEN=your_api_token_here
+
+# Optional: Agent Memory Layer durable store (default <cwd>/.memory)
+# On Railway, mount a volume here for cross-deploy score history.
+MEMORY_DB_PATH=.memory
 ```
 
 **⚠️ Security Notice**: Never expose `CLOUDFLARE_API_TOKEN` or `TURNSTILE_SECRET_KEY` in client-side code or commit them to a public repository.

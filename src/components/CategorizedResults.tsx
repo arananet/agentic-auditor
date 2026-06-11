@@ -10,6 +10,8 @@ export interface MetricItem {
   label: string;
   data: AuditResult;
   description: string;
+  /** Audit-response key for feedback (defaults to id when omitted; e.g. id 'llmstxt' → 'a2a'). */
+  dimension?: string;
 }
 
 export interface CategoryGroup {
@@ -24,9 +26,11 @@ export interface CategoryGroup {
 
 interface Props {
   categories: CategoryGroup[];
+  /** The audited URL — forwarded to feedback submissions. */
+  url?: string;
 }
 
-export const CategorizedResults = ({ categories }: Props) => {
+export const CategorizedResults = ({ categories, url }: Props) => {
   return (
     <div className="space-y-16 no-print">
       {categories.map((cat, catIdx) => {
@@ -99,7 +103,7 @@ export const CategorizedResults = ({ categories }: Props) => {
             </div>
 
             {/* Metric Cards */}
-            <MetricsGrid metrics={cat.metrics} />
+            <MetricsGrid metrics={cat.metrics} url={url} />
           </motion.div>
         );
       })}

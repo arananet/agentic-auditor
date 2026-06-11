@@ -8,7 +8,7 @@ const STATUS_ICON: Record<string, string> = {
   WAITING: '⏳',
 };
 
-const AUDIT_LABELS: Record<keyof Omit<AuditResponse, 'overallScore' | 'log' | 'screenshotInitial' | 'screenshotFinal'>, string> = {
+const AUDIT_LABELS: Record<keyof Omit<AuditResponse, 'overallScore' | 'log' | 'screenshotInitial' | 'screenshotFinal' | 'memory'>, string> = {
   citability: 'AI Citability',
   technical: 'Technical Readiness',
   schema: 'Schema Depth',

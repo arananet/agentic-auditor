@@ -3,6 +3,7 @@ node_modules/
 out/
 build/
 dist-cli/
+.memory/
 .DS_Store
 .env
 .env.local

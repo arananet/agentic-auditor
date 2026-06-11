@@ -20,6 +20,8 @@ Next.js 14 GEO audit tool. Evaluates any public URL across 15 dimensions for rea
 | `src/services/LlmAnalyzer.ts` | Cloudflare Workers AI caller with 60 RPM rate limiter |
 | `src/services/QueueManager.ts` | Job queue singleton, URL dedup, live log storage |
 | `src/services/CacheManager.ts` | LRU cache (200 entries max) |
+| `src/services/MemoryService.ts` | Agent Memory Layer — durable longitudinal score store, run-diffing, feedback (`globalMemory`) |
+| `src/app/api/feedback/route.ts` | POST per-finding 👍/👎 feedback into the memory layer (rate-limited) |
 | `src/services/audits/*.ts` | 15 IAuditStrategy implementations |
 | `src/app/api/audit/route.ts` | POST (enqueue) + GET (poll) with SSRF + Turnstile + rate limit |
 | `src/components/AuditForm.tsx` | Turnstile widget + URL input |
