@@ -140,7 +140,8 @@ export default function Home() {
     { id: "sentiment", label: "TONE_ALIGNMENT", data: results.sentiment, description: "Ensures your tone is factual and calm, which AI engines prefer for citations." },
     { id: "entityAuthority", label: "ENTITY_AUTHORITY", data: results.entityAuthority, description: "Validates sameAs links, Wikipedia/Wikidata presence, WebSite SearchAction, and author Person schema for AI knowledge panels." },
     { id: "paa", label: "PAA_OPTIMIZATION", data: results.paa, description: "Evaluates People Also Ask readiness: question heading clusters with 30–50 word self-contained answers." },
-    { id: "sitemap", label: "SITEMAP_AI_READINESS", data: results.sitemap, description: "Evaluates XML sitemap quality for AI crawler optimization: discoverability, freshness signals, size, and structural best practices." }
+    { id: "sitemap", label: "SITEMAP_AI_READINESS", data: results.sitemap, description: "Evaluates XML sitemap quality for AI crawler optimization: discoverability, freshness signals, size, and structural best practices." },
+    { id: "commerceAgent", label: "AGENTIC_COMMERCE", data: results.commerceAgent, description: "Readiness for AI agents to transact: ACP (OpenAI/Stripe), AP2 (Google), MCP server cards, UCP capability profiles, and transactable Product/Offer JSON-LD (price, availability, identifiers, return policy)." }
   ] : [];
 
   // Build categorized groups from flat metrics

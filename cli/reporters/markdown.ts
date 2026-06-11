@@ -23,6 +23,7 @@ const AUDIT_LABELS: Record<keyof Omit<AuditResponse, 'overallScore' | 'log' | 's
   entityAuthority: 'Entity Authority',
   paa: 'People Also Ask',
   sitemap: 'Sitemap AI Readiness',
+  commerceAgent: 'Agentic Commerce Readiness',
 };
 
 function scoreBar(score: number): string {

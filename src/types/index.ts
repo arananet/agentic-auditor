@@ -38,6 +38,7 @@ export interface AuditResponse {
   entityAuthority: AuditResult;
   paa: AuditResult;
   sitemap: AuditResult;
+  commerceAgent: AuditResult;
   log: string[];
   /** Base64 PNG — first capture right after page load (may show WAF/CAPTCHA) */
   screenshotInitial?: string;
