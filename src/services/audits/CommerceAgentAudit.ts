@@ -25,6 +25,15 @@ import { fetchTextFile } from '../fetchWithTimeout';
  * All four sit on top of machine-readable, *transactable* Product/Offer data
  * (price, currency, availability, identifiers, return/shipping policy), so that
  * substrate is scored directly from the page's JSON-LD.
+ *
+ * References:
+ *   ACP — https://www.agenticcommerce.dev/  ·  https://developers.openai.com/commerce
+ *         https://docs.stripe.com/agentic-commerce/acp
+ *   AP2 — https://ap2-protocol.org/specification/  ·  https://github.com/google-agentic-commerce/AP2
+ *   MCP — https://modelcontextprotocol.io/  ·  Server Cards / .well-known discovery (SEP-1649):
+ *         https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1649
+ *   UCP — https://ucp.dev/  ·  https://developers.google.com/merchant/ucp
+ *   Substrate — https://schema.org/Product  ·  https://schema.org/Offer
  */
 export class CommerceAgentAudit implements IAuditStrategy {
   name = 'commerceAgent';
