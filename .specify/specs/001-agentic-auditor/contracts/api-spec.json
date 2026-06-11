@@ -2,8 +2,8 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Geo Agentic Auditor API",
-    "version": "2.0.0",
-    "description": "Queue-based GEO audit API with Cloudflare Turnstile protection and live log streaming."
+    "version": "2.1.0",
+    "description": "Queue-based GEO audit API with Cloudflare Turnstile protection and live log streaming. Evaluates 15 audit dimensions, including Agentic Commerce Readiness (ACP, AP2, MCP, UCP)."
   },
   "paths": {
     "/api/audit": {
@@ -77,7 +77,7 @@
                       "description": "Live per-strategy log lines accumulated so far"
                     },
                     "result": {
-                      "type": "object",
+                      "allOf": [{ "$ref": "#/components/schemas/AuditResponse" }],
                       "description": "AuditResponse — present only when status=completed"
                     },
                     "error": { "type": "string" }
@@ -87,6 +87,105 @@
             }
           },
           "404": { "description": "Job not found or expired" }
+        }
+      }
+    },
+    "/api/feedback": {
+      "post": {
+        "summary": "Capture per-finding feedback (Agent Memory Layer)",
+        "description": "Stores an anonymous agree/disagree reaction to a single audit dimension. Feeds Phase-2 Oracle calibration. Rate-limited to 30/min per IP.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dimension": { "type": "string", "description": "Audit dimension key (one of AUDIT_DIMENSIONS)" },
+                  "signal": { "type": "string", "enum": ["agree", "disagree"] },
+                  "url": { "type": "string", "description": "Optional audited URL the feedback refers to" },
+                  "note": { "type": "string", "description": "Optional free-text note (truncated to 500 chars)" }
+                },
+                "required": ["dimension", "signal"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Feedback recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "id": { "type": "string", "description": "Feedback record UUID" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid dimension or signal" },
+          "429": { "description": "Rate limit exceeded (30 req/min per IP)" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuditFinding": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "explanation": { "type": "string" },
+          "remediation": { "type": "string" },
+          "source": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "url": { "type": "string" }
+            }
+          },
+          "location": { "type": "string", "description": "DOM/file location hint" }
+        }
+      },
+      "AuditResult": {
+        "type": "object",
+        "properties": {
+          "score": { "type": "number", "minimum": 0, "maximum": 100 },
+          "status": { "type": "string", "enum": ["READY", "WARN", "FAILED", "SCANNING", "WAITING"] },
+          "details": { "type": "array", "items": { "$ref": "#/components/schemas/AuditFinding" } },
+          "confidence": { "type": "string", "enum": ["high", "low", "overridden"], "description": "Oracle Validator confidence" },
+          "oracleFlags": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "AuditResponse": {
+        "type": "object",
+        "description": "Result of a completed audit across 15 dimensions.",
+        "properties": {
+          "overallScore": { "type": "number", "description": "Composite 0–100 across all dimensions" },
+          "log": { "type": "array", "items": { "type": "string" } },
+          "screenshotInitial": { "type": "string", "description": "base64 PNG — first capture after page load" },
+          "screenshotFinal": { "type": "string", "description": "base64 PNG — final audited page" },
+          "citability": { "$ref": "#/components/schemas/AuditResult" },
+          "technical": { "$ref": "#/components/schemas/AuditResult" },
+          "schema": { "$ref": "#/components/schemas/AuditResult" },
+          "a2a": { "$ref": "#/components/schemas/AuditResult" },
+          "brandMentions": { "$ref": "#/components/schemas/AuditResult" },
+          "contentQuality": { "$ref": "#/components/schemas/AuditResult" },
+          "intentMatch": { "$ref": "#/components/schemas/AuditResult" },
+          "structural": { "$ref": "#/components/schemas/AuditResult" },
+          "semantic": { "$ref": "#/components/schemas/AuditResult" },
+          "media": { "$ref": "#/components/schemas/AuditResult" },
+          "sentiment": { "$ref": "#/components/schemas/AuditResult" },
+          "entityAuthority": { "$ref": "#/components/schemas/AuditResult" },
+          "paa": { "$ref": "#/components/schemas/AuditResult" },
+          "sitemap": { "$ref": "#/components/schemas/AuditResult" },
+          "commerceAgent": {
+            "allOf": [{ "$ref": "#/components/schemas/AuditResult" }],
+            "description": "Agentic Commerce Readiness — discovery of ACP, AP2, MCP, and UCP endpoints plus transactable Product/Offer JSON-LD"
+          }
         }
       }
     }

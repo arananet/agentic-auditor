@@ -1,12 +1,14 @@
 # Geo Agentic Auditor
 
-Geo Agentic Auditor is a deterministic, heuristics-based, and LLM-accelerated Generative Engine Optimization (GEO) scanner. It evaluates a website's readiness for next-generation AI agents, LLMs, and RAG pipelines using **14 dedicated metrics** across three effort tiers: Quick Win, Editorial, and Development.
+Geo Agentic Auditor is a deterministic, heuristics-based, and LLM-accelerated Generative Engine Optimization (GEO) scanner. It evaluates a website's readiness for next-generation AI agents, LLMs, and RAG pipelines using **15 dedicated metrics** across four effort tiers: Quick Win, Editorial, Development, and Platform.
 
 ## Features
 
 - **Heuristic + Semantic Scanning**: Employs continuous density scoring and structural parsing to mimic how search engines (GPTBot, ClaudeBot, Perplexity) see the web.
-- **Agent Swarm Architecture**: 14 audit agents execute in parallel with a real-time Gantt chart showing execution timelines, peak concurrency, and per-agent durations.
-- **Oracle Governance Layer**: Post-execution cross-validation of all agent outputs — detects contradictions, anomalies, bot-block degradation, and thin-content artifacts. Annotates results with confidence levels and can override scores.
+- **Agent Swarm Architecture**: 15 audit agents execute in parallel with a real-time Gantt chart showing execution timelines, peak concurrency, and per-agent durations.
+- **Agentic Commerce Readiness**: Evaluates whether AI agents can *transact* with a site — discovery probes for ACP (OpenAI/Stripe), AP2 (Google), MCP server cards, and UCP capability profiles, plus validation of the transactable Product/Offer structured data all four protocols depend on.
+- **Oracle Governance Layer**: Post-execution cross-validation of all agent outputs — detects contradictions, anomalies, bot-block degradation, and thin-content artifacts. Annotates results with confidence levels and can override scores. Runs under a **versioned ruleset** (`oracle-1.0.0`) so scoring stays reproducible.
+- **Agent Memory Layer**: A durable longitudinal store remembers every audit's per-dimension scores and **diffs each run against the previous one** for the same URL (overall delta, improved/regressed dimensions), surfaced as a trend badge and `[MEMORY]` log lines. A `POST /api/feedback` endpoint captures per-finding 👍/👎 reactions that will calibrate the Oracle ruleset over time. Stores derived scores only (never HTML/screenshots); degrades to in-memory if no durable path is available. See [`.specify/specs/002-agent-memory`](.specify/specs/002-agent-memory/spec.md).
 - **WAF Detection & Solving**: Automatically identifies Cloudflare, Imperva, Datadome, and Akamai challenges. Attempts bypass via headless=new stealth browser; falls back to partial infrastructure-only audit if unsolvable.
 - **Dual Screenshot Capture**: Captures initial page load (may show WAF/CAPTCHA) and final audited content screenshots, displayed in a collapsible panel.
 - **Playwright Rendering**: Uses a headless Chromium singleton to render fully JavaScript-driven websites before analysis, with stealth patches for bot detection evasion.
@@ -20,7 +22,7 @@ Geo Agentic Auditor is a deterministic, heuristics-based, and LLM-accelerated Ge
 
 ## Architecture
 
-This project is a Next.js 14 application. It uses **Playwright** headless Chromium for page rendering (replacing vanilla `fetch`) and **Cheerio** for high-performance DOM parsing of the rendered HTML. Plain-text resources (robots.txt, llms.txt) are fetched directly without a browser via the `fetchTextFile()` helper. The **Oracle Validator** runs post-execution to cross-validate all 14 agent outputs, detect contradictions, and annotate results with confidence levels.
+This project is a Next.js 14 application. It uses **Playwright** headless Chromium for page rendering (replacing vanilla `fetch`) and **Cheerio** for high-performance DOM parsing of the rendered HTML. Plain-text resources (robots.txt, llms.txt) and agent-discovery files (`.well-known/mcp.json`, `agent-card.json`, `ucp.json`) are fetched directly without a browser via the SSRF-safe `fetchTextFile()` helper. The **Oracle Validator** runs post-execution to cross-validate all 15 agent outputs, detect contradictions, and annotate results with confidence levels.
 
 ## Getting Started
 
@@ -46,12 +48,16 @@ NEXT_PUBLIC_TURNSTILE_SITE_KEY=your_site_key_here
 TURNSTILE_SECRET_KEY=your_secret_key_here
 
 # Optional: Cloudflare Workers AI for Deep Semantic Analysis
-# Free Tier = 10,000 neurons/day (shared across Sentiment + Intent audits)
-CF_AI_ACCOUNT_ID=your_account_id_here
-CF_AI_API_TOKEN=your_api_token_here
+# Free Tier = 10,000 neurons/day (shared across all LLM-accelerated audits)
+CLOUDFLARE_ACCOUNT_ID=your_account_id_here
+CLOUDFLARE_API_TOKEN=your_api_token_here
+
+# Optional: Agent Memory Layer durable store (default <cwd>/.memory)
+# On Railway, mount a volume here for cross-deploy score history.
+MEMORY_DB_PATH=.memory
 ```
 
-**⚠️ Security Notice**: Never expose `CF_AI_API_TOKEN` or `TURNSTILE_SECRET_KEY` in client-side code or commit them to a public repository.
+**⚠️ Security Notice**: Never expose `CLOUDFLARE_API_TOKEN` or `TURNSTILE_SECRET_KEY` in client-side code or commit them to a public repository.
 
 #### About the Cloudflare Workers AI Free Tier
 The app uses `@cf/meta/llama-3.1-8b-instruct` via the Cloudflare Workers AI **Free Tier**, which provides **10,000 neurons per day**. This limit is displayed on the homepage. Once exhausted, Sentiment and Intent audits fall back to heuristic scoring automatically. Upgrade to a paid plan to remove the cap.
@@ -74,7 +80,7 @@ npm run audit:cli -- --urls-file cli/urls.example.txt --output ./reports --forma
 npm run audit:cli -- --url https://www.example.com --format pdf
 ```
 
-## 14 GEO Metrics Evaluated
+## 15 Metrics Evaluated
 
 | # | Metric | What it checks | Effort tier |
 |---|---|---|---|
@@ -92,12 +98,13 @@ npm run audit:cli -- --url https://www.example.com --format pdf
 | 12 | **Entity Authority** | **`sameAs` completeness** on Organization/Person (Wikipedia, Wikidata, LinkedIn, Crunchbase, X); Wikipedia/Wikidata entity presence; `WebSite` + `SearchAction` validation; Person/author schema quality (`jobTitle`, `knowsAbout`, `sameAs`); `LocalBusiness` NAP consistency | Development |
 | 13 | **PAA Optimization** | **People Also Ask** readiness — question-phrased H2/H3 heading clusters (multi-language: en, es, pt, fr, de, it); 30–50 word self-contained answer validation; consecutive Q&A cluster quality (5–8 ideal); too-short/too-long answer detection | Editorial |
 | 14 | **Sitemap AI Readiness** | XML sitemap discovery (robots.txt directive, `/sitemap.xml`, `/sitemap_index.xml`); `<lastmod>` freshness coverage; URL count vs 50K limit; entry staleness (>1yr); gzip/size optimization; mobile/image/video/news sub-sitemaps; index-of-indexes structure | Quick Win |
+| 15 | **Agentic Commerce Readiness** | Whether an AI agent can *transact* with the site: **MCP** server card (`/.well-known/mcp.json`, SEP-1649) + advertised tool count; **AP2** A2A AgentCard (`/.well-known/agent-card.json`) with payment/mandate/checkout capability; **UCP** capability profile (`/.well-known/ucp.json`); **ACP** discovery manifest; **transactable Product/Offer JSON-LD** (price + ISO-4217 currency, availability, GTIN/MPN/SKU, `hasMerchantReturnPolicy`/`shippingDetails`, ratings) | Platform |
 
 > Geo Metrics contains pieces based on the https://github.com/zubair-trabzada/geo-seo-claude framework.
 
 ## Sources & References
 
-Every finding in the auditor references its backing standard. The table below lists the primary source for each of the 14 audit dimensions.
+Every finding in the auditor references its backing standard. The table below lists the primary source for each of the 15 audit dimensions.
 
 ### AI Citability
 | Source | Purpose |
@@ -219,6 +226,20 @@ Every finding in the auditor references its backing standard. The table below li
 | [Sitemaps.org Protocol](https://www.sitemaps.org/protocol.html) | XML Sitemap standard: `<lastmod>`, `<changefreq>`, `<priority>`, 50K URL limit, 50MB uncompressed size limit |
 | [Google Search Central — Sitemaps](https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview) | Sitemap best practices for crawler discovery, freshness signals, and index management |
 | [Google Search Central — Robots.txt Sitemap directive](https://developers.google.com/search/docs/crawling-indexing/robots/robots_txt) | `Sitemap:` directive in robots.txt for automated sitemap discovery by AI crawlers |
+
+### Agentic Commerce Readiness
+| Source | Purpose |
+|---|---|
+| [ACP — Agentic Commerce Protocol](https://www.agenticcommerce.dev/) | Open standard (OpenAI + Stripe + Meta) for AI agents completing purchases; product feeds + 5-endpoint REST checkout flow powering ChatGPT Instant Checkout |
+| [OpenAI — Agentic Commerce docs](https://developers.openai.com/commerce) | Product feed format (gzipped JSONL/CSV/XML, title ≤150 chars, ISO 4217 price, availability, checkout eligibility) and integration guide |
+| [Stripe — Agentic Commerce Protocol](https://docs.stripe.com/agentic-commerce/acp) | ACP checkout/payment endpoint reference (create / update / get / complete / cancel session) |
+| [AP2 — Agent Payments Protocol Specification](https://ap2-protocol.org/specification/) | Google + 60 payment partners; Intent/Cart/Payment Mandates, AgentCard capability advertising, merchant Cart Mandate endpoint |
+| [AP2 — Reference implementation](https://github.com/google-agentic-commerce/AP2) | Agent Identity, Payment Intent, and Settlement Proof schemas; REST endpoints |
+| [MCP — Server Cards / `.well-known` discovery (SEP-1649)](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1649) | `/.well-known/mcp.json` server card advertising tools, transports, and auth before connection |
+| [Model Context Protocol](https://modelcontextprotocol.io/) | MCP transport and capability model for exposing catalog/cart/checkout as agent-callable tools |
+| [UCP — Universal Commerce Protocol](https://ucp.dev/) | Google umbrella standard (NRF 2026, Apache 2.0); REST/JSON-RPC capability profile built on AP2, A2A, and MCP |
+| [Google for Developers — Merchant UCP](https://developers.google.com/merchant/ucp) | UCP merchant onboarding and capability declaration |
+| [Schema.org — Product](https://schema.org/Product) / [Offer](https://schema.org/Offer) | Transactable product substrate: price, `priceCurrency` (ISO 4217), `availability`, `gtin`/`mpn`/`sku`, `hasMerchantReturnPolicy`, `shippingDetails`, `aggregateRating` |
 
 ## License
 

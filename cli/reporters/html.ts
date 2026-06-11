@@ -8,7 +8,7 @@ const STATUS_COLOR: Record<string, string> = {
   WAITING: '#6b7280',
 };
 
-const AUDIT_LABELS: Record<keyof Omit<AuditResponse, 'overallScore' | 'log'>, string> = {
+const AUDIT_LABELS: Record<keyof Omit<AuditResponse, 'overallScore' | 'log' | 'screenshotInitial' | 'screenshotFinal' | 'memory'>, string> = {
   citability: 'AI Citability',
   technical: 'Technical Readiness',
   schema: 'Schema Depth',
@@ -22,6 +22,8 @@ const AUDIT_LABELS: Record<keyof Omit<AuditResponse, 'overallScore' | 'log'>, st
   sentiment: 'Tone Alignment',
   entityAuthority: 'Entity Authority',
   paa: 'PAA Optimization',
+  sitemap: 'Sitemap AI Readiness',
+  commerceAgent: 'Agentic Commerce Readiness',
 };
 
 function auditCard(label: string, result: AuditResult): string {

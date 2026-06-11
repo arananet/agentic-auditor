@@ -8,7 +8,7 @@ const STATUS_ICON: Record<string, string> = {
   WAITING: '⏳',
 };
 
-const AUDIT_LABELS: Record<keyof Omit<AuditResponse, 'overallScore' | 'log' | 'screenshotInitial' | 'screenshotFinal'>, string> = {
+const AUDIT_LABELS: Record<keyof Omit<AuditResponse, 'overallScore' | 'log' | 'screenshotInitial' | 'screenshotFinal' | 'memory'>, string> = {
   citability: 'AI Citability',
   technical: 'Technical Readiness',
   schema: 'Schema Depth',
@@ -23,6 +23,7 @@ const AUDIT_LABELS: Record<keyof Omit<AuditResponse, 'overallScore' | 'log' | 's
   entityAuthority: 'Entity Authority',
   paa: 'People Also Ask',
   sitemap: 'Sitemap AI Readiness',
+  commerceAgent: 'Agentic Commerce Readiness',
 };
 
 function scoreBar(score: number): string {

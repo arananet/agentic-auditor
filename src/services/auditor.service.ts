@@ -15,8 +15,10 @@ import { SentimentAudit } from './audits/SentimentAudit';
 import { EntityAuthorityAudit } from './audits/EntityAuthorityAudit';
 import { PaaAudit } from './audits/PaaAudit';
 import { SitemapAudit } from './audits/SitemapAudit';
+import { CommerceAgentAudit } from './audits/CommerceAgentAudit';
 import { fetchWithTimeout, isBotBlockPage, detectWafVendor, solveWafChallenge } from './fetchWithTimeout';
 import { globalCache } from './CacheManager';
+import { globalMemory } from './MemoryService';
 import { LlmAnalyzer, swarmStats } from './LlmAnalyzer';
 import { runOracle } from './OracleValidator';
 
@@ -35,8 +37,14 @@ export class AuditorService {
     new SentimentAudit(),
     new EntityAuthorityAudit(),
     new PaaAudit(),
-    new SitemapAudit()
+    new SitemapAudit(),
+    new CommerceAgentAudit()
   ];
+
+  /** Maximum attainable raw score = one fully-passing audit (100) per strategy. */
+  private get maxRawScore(): number {
+    return this.strategies.length * 100;
+  }
 
   async runAudit(
     url: string,
@@ -167,7 +175,7 @@ export class AuditorService {
       // ── Oracle Governance: cross-validate all agent outputs ──────────
       const bodyText = $.root().text() || '';
       const wordCount = bodyText.split(/\s+/).filter(Boolean).length;
-      const verdicts = runOracle(results, { botBlocked: false, htmlBytes: html.length, wordCount }, emit);
+      const verdicts = runOracle(results, { botBlocked: false, htmlBytes: html.length, wordCount }, emit, globalMemory.getOracleParams());
 
       // Apply oracle adjustments
       let scoreAdjustment = 0;
@@ -187,15 +195,17 @@ export class AuditorService {
       }
 
       const totalMs = Date.now() - t0;
-      // We have 14 audits, max 1400 points
-      results.overallScore = Math.round((totalScore / 1400) * 100);
+      results.overallScore = Math.round((totalScore / this.maxRawScore) * 100);
       emit(`[OK] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-      emit(`[OK] FINAL GEO SCORE: ${results.overallScore}/100 (14 audits in ${(totalMs / 1000).toFixed(1)}s)`);
+      emit(`[OK] FINAL GEO SCORE: ${results.overallScore}/100 (${this.strategies.length} audits in ${(totalMs / 1000).toFixed(1)}s)`);
       if (LlmAnalyzer.isConfigured()) {
         const finalStats = swarmStats();
         emit(`[INFO] Swarm peak: ${finalStats.peakConcurrent} concurrent LLM calls.`);
       }
-      
+
+      // ── Agent Memory: record this run and surface the trend vs last time ──
+      this.applyMemory(url, results, emit);
+
       // Save to cache for 1 hour (3600 seconds)
       globalCache.set(cacheKey, results, 3600);
 
@@ -285,12 +295,11 @@ export class AuditorService {
     }
 
     // ── Infrastructure audits that fetch their own resources ────────────
-    const infraStrategies = this.strategies.filter(s =>
-      ['a2a', 'technical', 'sitemap'].includes(s.name)
-    );
-    const skippedStrategies = this.strategies.filter(s =>
-      !['a2a', 'technical', 'sitemap'].includes(s.name)
-    );
+    // commerceAgent probes /.well-known agent endpoints independently of the
+    // (blocked) page HTML, so it still produces meaningful discovery results.
+    const infraNames = ['a2a', 'technical', 'sitemap', 'commerceAgent'];
+    const infraStrategies = this.strategies.filter(s => infraNames.includes(s.name));
+    const skippedStrategies = this.strategies.filter(s => !infraNames.includes(s.name));
 
     emit(`[INFO] ━━━ Running ${infraStrategies.length} infrastructure audits (independent of page HTML) ━━━`);
 
@@ -342,12 +351,54 @@ export class AuditorService {
     }
 
     const totalMs = Date.now() - t0;
-    results.overallScore = Math.round((totalScore / 1400) * 100);
+    results.overallScore = Math.round((totalScore / this.maxRawScore) * 100);
     emit(`[OK] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-    emit(`[WARN] PARTIAL GEO SCORE: ${results.overallScore}/100 (${infraStrategies.length} of 14 audits — site blocked by ${wafVendor})`);
-    emit(`[INFO] Only infrastructure audits (a2a, technical, sitemap) produced real results. Content audits were skipped.`);
+    emit(`[WARN] PARTIAL GEO SCORE: ${results.overallScore}/100 (${infraStrategies.length} of ${this.strategies.length} audits — site blocked by ${wafVendor})`);
+    emit(`[INFO] Only infrastructure audits (a2a, technical, sitemap, commerceAgent) produced real results. Content audits were skipped.`);
+
+    this.applyMemory(url, results, emit);
 
     globalCache.set(`audit:${url}`, results, 3600);
     return results as AuditResponse;
+  }
+
+  /**
+   * Agent Memory Layer (Phase 1): record this audit's per-dimension scores,
+   * diff against the previous audit of the same URL, attach the trend to the
+   * response, and emit a [MEMORY] log line. Best-effort — never fails an audit.
+   */
+  private applyMemory(
+    url: string,
+    results: Partial<AuditResponse> & { overallScore: number; log: string[] },
+    emit: (msg: string) => void
+  ): void {
+    try {
+      const scores: Record<string, number> = {};
+      for (const s of this.strategies) {
+        const r = (results as any)[s.name] as AuditResult | undefined;
+        if (r && typeof r.score === 'number') scores[s.name] = r.score;
+      }
+
+      const rulesetVersion = globalMemory.getOracleParams().version;
+      const diff = globalMemory.diff(url, scores, results.overallScore);
+      let domain = '';
+      try { domain = new URL(url).hostname; } catch { /* keep empty */ }
+
+      globalMemory.remember({ url, domain, ts: Date.now(), rulesetVersion, overallScore: results.overallScore, scores });
+      const auditCount = globalMemory.history(url).length;
+      results.memory = { rulesetVersion, auditCount, diff };
+
+      if (diff.previousTs == null) {
+        emit(`[MEMORY] First audit recorded for this URL — future scans will show score trends.${globalMemory.isEnabled() ? '' : ' (in-memory only — set MEMORY_DB_PATH for durable history)'}`);
+      } else {
+        const sign = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
+        const parts: string[] = [`overall ${sign(diff.overallDelta ?? 0)}`];
+        if (diff.improved.length) parts.push(`improved: ${diff.improved.join(', ')}`);
+        if (diff.regressed.length) parts.push(`regressed: ${diff.regressed.join(', ')}`);
+        emit(`[MEMORY] vs last audit ${diff.ageDays}d ago (run #${auditCount}) — ${parts.join('; ')}.`);
+      }
+    } catch (e: any) {
+      emit(`[MEMORY] Skipped (${e?.message || 'error'}).`);
+    }
   }
 }

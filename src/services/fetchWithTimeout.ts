@@ -420,20 +420,52 @@ export async function fetchWithTimeout(url: string, timeoutMs: number = 45000): 
   }
 }
 
+// Cap on fetched text resources — a malicious target could otherwise stream an
+// unbounded body and exhaust server memory. Audits only ever read the first few
+// KB, so 5 MB is generous.
+const MAX_TEXT_BYTES = 5 * 1024 * 1024;
+
+// Reads a response body but stops once MAX_TEXT_BYTES have been consumed, so a
+// lying/absent Content-Length can't be used to exhaust memory.
+async function readCappedText(res: Response, maxBytes: number): Promise<string> {
+  const reader = res.body?.getReader();
+  if (!reader) return (await res.text()).slice(0, maxBytes);
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      total += value.length;
+      chunks.push(value);
+      if (total >= maxBytes) {
+        await reader.cancel().catch(() => {});
+        break;
+      }
+    }
+  } finally {
+    reader.releaseLock?.();
+  }
+  return Buffer.concat(chunks).toString('utf8').slice(0, maxBytes);
+}
+
 /**
- * Simple fetch for plain text files (llms.txt, robots.txt, agent.json).
- * No JS rendering needed — avoids wasting browser resources.
+ * SSRF-safe fetch with manual redirect following.
  *
- * Uses manual redirect following so every hop is validated against the SSRF
- * blocklist before the request is made.
+ * Every hop — including the initial URL — is re-validated against the private-IP
+ * blocklist (with a fresh DNS lookup) before the request is issued. This is the
+ * only outbound path audits should use: it defeats redirect-based SSRF (e.g. a
+ * target 301-ing to 169.254.169.254) and re-checks DNS each hop to blunt
+ * rebinding. The native `fetch` default (`redirect: 'follow'`) does none of this.
  */
-export async function fetchTextFile(url: string, timeoutMs: number = 10000): Promise<string> {
+export async function safeFetch(
+  url: string,
+  init: RequestInit = {},
+  timeoutMs: number = 10000,
+): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
-  const HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (compatible; GEO-Auditor/1.0)',
-    'Accept': 'text/plain, application/json, */*',
-  };
   try {
     let currentUrl = url;
     for (let hops = 0; hops < 5; hops++) {
@@ -441,9 +473,9 @@ export async function fetchTextFile(url: string, timeoutMs: number = 10000): Pro
         throw new Error('URL blocked: resolves to a private or reserved address');
       }
       const res = await fetch(currentUrl, {
+        ...init,
         signal: controller.signal,
         redirect: 'manual',
-        headers: HEADERS,
       });
       if (res.status >= 300 && res.status < 400) {
         const location = res.headers.get('location');
@@ -451,11 +483,28 @@ export async function fetchTextFile(url: string, timeoutMs: number = 10000): Pro
         currentUrl = new URL(location, currentUrl).toString();
         continue;
       }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.text();
+      return res;
     }
     throw new Error('Too many redirects');
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * Simple fetch for plain text files (llms.txt, robots.txt, agent.json).
+ * No JS rendering needed — avoids wasting browser resources.
+ *
+ * Delegates to safeFetch so every redirect hop is SSRF-validated, and caps the
+ * response body to avoid memory exhaustion.
+ */
+export async function fetchTextFile(url: string, timeoutMs: number = 10000): Promise<string> {
+  const res = await safeFetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; GEO-Auditor/1.0)',
+      'Accept': 'text/plain, application/json, */*',
+    },
+  }, timeoutMs);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return readCappedText(res, MAX_TEXT_BYTES);
 }

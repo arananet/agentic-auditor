@@ -1,7 +1,7 @@
 # Claude Agent Guide — Geo Agentic Auditor
 
 ## Project Summary
-Next.js 14 GEO audit tool. Evaluates any public URL across 11 dimensions for readiness by generative AI engines (ChatGPT, Claude, Perplexity). Uses Playwright for rendering, Cheerio for parsing, and Cloudflare Workers AI (free tier) for LLM-accelerated scoring.
+Next.js 14 GEO audit tool. Evaluates any public URL across 15 dimensions for readiness by generative AI engines (ChatGPT, Claude, Perplexity) — including Agentic Commerce Readiness (ACP, AP2, MCP, UCP). Uses Playwright for rendering, Cheerio for parsing, and Cloudflare Workers AI (free tier) for LLM-accelerated scoring.
 
 ## Key Architectural Rules
 - **Never use SSO / next-auth.** This is a public Cloudflare-stack app. Authentication is Cloudflare Turnstile only.
@@ -20,19 +20,21 @@ Next.js 14 GEO audit tool. Evaluates any public URL across 11 dimensions for rea
 | `src/services/LlmAnalyzer.ts` | Cloudflare Workers AI caller with 60 RPM rate limiter |
 | `src/services/QueueManager.ts` | Job queue singleton, URL dedup, live log storage |
 | `src/services/CacheManager.ts` | LRU cache (200 entries max) |
-| `src/services/audits/*.ts` | 11 IAuditStrategy implementations |
+| `src/services/MemoryService.ts` | Agent Memory Layer — durable longitudinal score store, run-diffing, feedback (`globalMemory`) |
+| `src/app/api/feedback/route.ts` | POST per-finding 👍/👎 feedback into the memory layer (rate-limited) |
+| `src/services/audits/*.ts` | 15 IAuditStrategy implementations |
 | `src/app/api/audit/route.ts` | POST (enqueue) + GET (poll) with SSRF + Turnstile + rate limit |
 | `src/components/AuditForm.tsx` | Turnstile widget + URL input |
-| `src/components/MetricsGrid.tsx` | 11-card grid with React state tooltips + source/location |
+| `src/components/MetricsGrid.tsx` | Metric-card grid with React state tooltips + source/location |
 | `src/app/page.tsx` | Main page: live log polling, auto-scroll, print report |
 | `cli/index.ts` | CLI batch auditor entry point |
 | `cli/reporters/` | Markdown and PDF reporters |
 
 ## Environment Variables
 ```
-TURNSTILE_SECRET_KEY=     # Cloudflare Turnstile secret
-CF_AI_ACCOUNT_ID=         # Cloudflare account ID
-CF_AI_API_TOKEN=          # Cloudflare API token (Workers AI:Read)
+TURNSTILE_SECRET_KEY=        # Cloudflare Turnstile secret
+CLOUDFLARE_ACCOUNT_ID=       # Cloudflare account ID
+CLOUDFLARE_API_TOKEN=        # Cloudflare API token (Workers AI:Read)
 ```
 
 ## Running Locally

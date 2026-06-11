@@ -3,13 +3,15 @@
 import { AuditResult } from "@/types";
 import { MetricsGrid } from "./MetricsGrid";
 import { motion } from "framer-motion";
-import { Shield, FileText, Code2 } from "lucide-react";
+import { Shield, FileText, Code2, ShoppingCart } from "lucide-react";
 
 export interface MetricItem {
   id: string;
   label: string;
   data: AuditResult;
   description: string;
+  /** Audit-response key for feedback (defaults to id when omitted; e.g. id 'llmstxt' → 'a2a'). */
+  dimension?: string;
 }
 
 export interface CategoryGroup {
@@ -24,9 +26,11 @@ export interface CategoryGroup {
 
 interface Props {
   categories: CategoryGroup[];
+  /** The audited URL — forwarded to feedback submissions. */
+  url?: string;
 }
 
-export const CategorizedResults = ({ categories }: Props) => {
+export const CategorizedResults = ({ categories, url }: Props) => {
   return (
     <div className="space-y-16 no-print">
       {categories.map((cat, catIdx) => {
@@ -99,7 +103,7 @@ export const CategorizedResults = ({ categories }: Props) => {
             </div>
 
             {/* Metric Cards */}
-            <MetricsGrid metrics={cat.metrics} />
+            <MetricsGrid metrics={cat.metrics} url={url} />
           </motion.div>
         );
       })}
@@ -135,5 +139,14 @@ export const CATEGORY_DEFS = [
     icon: <Code2 size={22} />,
     description: 'HTML and schema changes requiring frontend development: JSON-LD structured data, entity authority signals, semantic HTML elements, table headers, FAQ sections, comparison tables, and SpeakableSpecification.',
     metricIds: ['schema', 'structural', 'entityAuthority'],
+  },
+  {
+    id: 'agentic-commerce',
+    title: 'Agentic Commerce Readiness',
+    effort: 'Platform',
+    effortColor: 'text-[#C99FD6] border-[#C99FD6]/30 bg-[#C99FD6]/5',
+    icon: <ShoppingCart size={22} />,
+    description: 'Readiness for AI agents to transact on a user\'s behalf via the 2026 interoperability stacks — ACP (OpenAI/Stripe), AP2 (Google), MCP server cards, and UCP — plus the transactable Product/Offer data all of them depend on.',
+    metricIds: ['commerceAgent'],
   },
 ] as const;
