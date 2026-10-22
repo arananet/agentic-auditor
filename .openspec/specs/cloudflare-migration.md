@@ -42,3 +42,14 @@ de Railway, así que la migración es también la recuperación del servicio.
   por el gateway) y TURNSTILE_SECRET_KEY.
 - NEXT_PUBLIC_TURNSTILE_SITE_KEY es pública por diseño y va como variable de
   build del proyecto, para que Next la incruste al compilar.
+
+## Verificación tras el despliegue
+
+1. `https://agentic-auditor.info-693.workers.dev` responde 200 (arranque en
+   frío del contenedor, puede tardar unos segundos la primera vez).
+2. Con el dominio enganchado, `https://geo-agentic-auditor.arananet.net`
+   responde 200 y sin cabeceras `x-railway-*`.
+3. Una auditoría de prueba completa el flujo y genera su informe PDF
+   (Playwright operativo dentro del contenedor).
+4. Los logs del AI Gateway muestran la llamada con metadata
+   app=geo-agentic-auditor.
