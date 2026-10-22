@@ -23,7 +23,7 @@ interface GeoEnv {
 
 export class GeoAuditorContainer extends Container {
   defaultPort = 3000;
-  sleepAfter = "10m";
+  sleepAfter = "15m";
 
   constructor(ctx: DurableObjectState, env: GeoEnv) {
     super(ctx, env);
