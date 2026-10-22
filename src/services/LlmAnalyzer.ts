@@ -71,14 +71,17 @@ export class LlmAnalyzer {
   private static async _doFetch(text: string, systemPrompt: string): Promise<LlmResult | null> {
     const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
     const apiToken = process.env.CLOUDFLARE_API_TOKEN;
-    const endpoint = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/meta/llama-3.1-8b-instruct`;
+    // All AI traffic goes through the shared AI Gateway (arananet-ai-gateway)
+    // so usage is observable per app via the cf-aig-metadata header.
+    const endpoint = `https://gateway.ai.cloudflare.com/v1/${accountId}/arananet-ai-gateway/workers-ai/@cf/meta/llama-3.1-8b-instruct`;
 
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiToken}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'cf-aig-metadata': JSON.stringify({ app: 'geo-agentic-auditor', env: 'prod' })
         },
         body: JSON.stringify({
           messages: [
